@@ -73,6 +73,20 @@ original fit instead of re-tuning it (faster).}
 
 \item{gaussian.stub}{Developer option of hdi: replace the bootstrap
 distribution by independent standard normal draws.}
+
+\item{boot.type}{\code{"residual"}, \code{"wild"} or \code{"xyz"} (xyz-paired bootstrap).
+Defaults to \code{"wild"} if \code{wild = TRUE}, else \code{"residual"}.}
+
+\item{multiplier}{Multipliers of the wild bootstrap: \code{"gaussian"} (default,
+as in hdi) or \code{"mammen"}.}
+
+\item{boot.H0c}{Also compute the bootstrap under the complete null
+hypothesis (always done, and required, for \code{multiplecorr.method = "WY"});
+needed for \code{\link[=groupTest]{groupTest()}}.}
+
+\item{groups}{Optional group (vector of indices or names) or list of groups
+for which bootstrap summaries are stored, so that simultaneous intervals
+and group tests for them are available without \code{return.bootdist = TRUE}.}
 }
 \value{
 An object of class \code{c("silm_boot_lasso_proj", "silm_proj")}: a list
@@ -142,6 +156,28 @@ individual p-values are (2 c + 1) / (B + 1), where c is the smaller of the
 two tail counts of the bootstrap distribution.
 }
 
+\section{SILM additions (not in hdi)}{
+
+\itemize{
+\item \code{boot.type = "wild"} with \code{multiplier = "mammen"}: the wild bootstrap
+with Mammen's two-point multipliers (Section 4.1), which also match the
+third moment of the errors.
+\item \code{boot.type = "xyz"}: the xyz-paired bootstrap (Section 4.2), which
+resamples rows of the design, the response and the nodewise residuals
+after a correction that makes the bootstrap errors orthogonal to them.
+It is defined with \code{robust = TRUE}; the paper reports that it is less
+competitive than the Gaussian wild bootstrap.
+\item Simultaneous confidence intervals (eq. 10) via
+\code{confint(fit, type = "simultaneous")} and group tests via \code{\link[=groupTest]{groupTest()}}.
+}
+
+Validity (the paper's Theorems 1-3): the residual bootstrap is valid for
+individual inference, and for simultaneous inference under homoscedastic
+errors; the wild bootstrap with \code{robust = TRUE} is valid for individual and
+simultaneous inference under heteroscedastic errors and is the paper's
+preferred method in that case.
+}
+
 \examples{
 set.seed(1)
 x <- matrix(rnorm(50 * 15), 50, 15)
@@ -160,5 +196,5 @@ High-dimensional inference: confidence intervals, p-values and
 R-software hdi. \emph{Statistical Science}, 30, 533-558.
 }
 \seealso{
-\code{\link[=lasso.proj]{lasso.proj()}}, \code{\link[=confint.silm_proj]{confint.silm_proj()}}, \code{\link[=Sim.CI]{Sim.CI()}}
+\code{\link[=lasso.proj]{lasso.proj()}}, \code{\link[=confint.silm_proj]{confint.silm_proj()}}, \code{\link[=groupTest]{groupTest()}}, \code{\link[=Sim.CI]{Sim.CI()}}
 }

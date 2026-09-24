@@ -53,6 +53,24 @@
 #' individual p-values are (2 c + 1) / (B + 1), where c is the smaller of the
 #' two tail counts of the bootstrap distribution.
 #'
+#' @section SILM additions (not in hdi):
+#' * `boot.type = "wild"` with `multiplier = "mammen"`: the wild bootstrap
+#'   with Mammen's two-point multipliers (Section 4.1), which also match the
+#'   third moment of the errors.
+#' * `boot.type = "xyz"`: the xyz-paired bootstrap (Section 4.2), which
+#'   resamples rows of the design, the response and the nodewise residuals
+#'   after a correction that makes the bootstrap errors orthogonal to them.
+#'   It is defined with `robust = TRUE`; the paper reports that it is less
+#'   competitive than the Gaussian wild bootstrap.
+#' * Simultaneous confidence intervals (eq. 10) via
+#'   `confint(fit, type = "simultaneous")` and group tests via [groupTest()].
+#'
+#' Validity (the paper's Theorems 1-3): the residual bootstrap is valid for
+#' individual inference, and for simultaneous inference under homoscedastic
+#' errors; the wild bootstrap with `robust = TRUE` is valid for individual and
+#' simultaneous inference under heteroscedastic errors and is the paper's
+#' preferred method in that case.
+#'
 #' @inheritParams lasso.proj
 #' @param family Only `"gaussian"` is supported.
 #' @param multiplecorr.method `"WY"` (default; Westfall-Young max-T procedure
@@ -67,6 +85,16 @@
 #' @param wild Use the wild bootstrap with Gaussian multipliers.
 #' @param gaussian.stub Developer option of hdi: replace the bootstrap
 #'   distribution by independent standard normal draws.
+#' @param boot.type `"residual"`, `"wild"` or `"xyz"` (xyz-paired bootstrap).
+#'   Defaults to `"wild"` if `wild = TRUE`, else `"residual"`.
+#' @param multiplier Multipliers of the wild bootstrap: `"gaussian"` (default,
+#'   as in hdi) or `"mammen"`.
+#' @param boot.H0c Also compute the bootstrap under the complete null
+#'   hypothesis (always done, and required, for `multiplecorr.method = "WY"`);
+#'   needed for [groupTest()].
+#' @param groups Optional group (vector of indices or names) or list of groups
+#'   for which bootstrap summaries are stored, so that simultaneous intervals
+#'   and group tests for them are available without `return.bootdist = TRUE`.
 #' @return An object of class `c("silm_boot_lasso_proj", "silm_proj")`: a list
 #'   with the elements of hdi's result, in the same order, `pval`,
 #'   `pval.corr`, `sigmahat`, `standardize`, `sds`, `bhat`, `se`, `betahat`,
@@ -88,7 +116,7 @@
 #'   Dezeure, R., Bühlmann, P., Meier, L. and Meinshausen, N. (2015).
 #'   High-dimensional inference: confidence intervals, p-values and
 #'   R-software hdi. \emph{Statistical Science}, 30, 533-558.
-#' @seealso [lasso.proj()], [confint.silm_proj()], [Sim.CI()]
+#' @seealso [lasso.proj()], [confint.silm_proj()], [groupTest()], [Sim.CI()]
 #' @examples
 #' set.seed(1)
 #' x <- matrix(rnorm(50 * 15), 50, 15)
