@@ -4,12 +4,21 @@
 \alias{SR}
 \title{Support Recovery Procedure}
 \usage{
-SR(X, Y, nodewise = c("cv", "ZnZ"))
+SR(
+  X,
+  Y,
+  nodewise = c("cv", "ZnZ"),
+  center = FALSE,
+  Theta = NULL,
+  parallel = FALSE,
+  ncores = getOption("mc.cores", 2L)
+)
 }
 \arguments{
-\item{X}{n times p design matrix.}
+\item{X}{Design matrix (n x p).}
 
-\item{Y}{Response variable.}
+\item{Y}{Response variable (a numeric vector of length n, or an n x 1
+matrix).}
 
 \item{nodewise}{Tuning rule for the nodewise lasso that estimates
 \eqn{\Theta} (the inverse of the Gram matrix) when \code{p > floor(n/2)}:
@@ -17,14 +26,38 @@ SR(X, Y, nodewise = c("cv", "ZnZ"))
 error pooled over all nodewise regressions, as described in Zhang and
 Cheng (2017, Section 5); \code{"ZnZ"} refines that lambda with the rule of
 Zhang and Zhang (2014). See the section "Nodewise tuning" below.}
+
+\item{center}{Logical. If \code{TRUE}, the columns of \code{X} and \code{Y} are centred
+before the analysis. The default \code{FALSE} uses the data as given (as SILM
+1.0.0 did) and warns when they do not appear to be centred.}
+
+\item{Theta}{Optional precomputed \eqn{\hat\Theta} (a p x p matrix, e.g.
+from \code{\link[=Theta.hat]{Theta.hat()}}) to avoid recomputing it. Note that supplying it skips
+the random draw of the nodewise cross-validation folds.}
+
+\item{parallel, ncores}{Compute the nodewise regressions in parallel on
+\code{ncores} cores (forking; not on Windows). This does not change the
+results.}
 }
 \value{
-The sets of active variables selected by the support recovery
-procedure and the scaled Lasso.
+A list with two integer vectors: \code{"de-biased Lasso"}, the variables
+selected by the support recovery procedure, and \code{"scaled Lasso"}, the
+support of the scaled lasso.
 }
 \description{
-This function implements the support recovery procedure in Zhang and Cheng
-(2017).
+Implements the support recovery procedure of Zhang and Cheng (2017,
+Section 3.1): variable \eqn{j} is selected when its studentized de-biased
+lasso statistic \eqn{\sqrt{n}|\breve\beta_j|/\hat\omega_{jj}^{1/2}} exceeds
+\eqn{\sqrt{2\log p}}.
+}
+\details{
+The model is \eqn{Y = X\beta + \epsilon} \strong{without intercept}: the columns
+of \code{X} and the response \code{Y} are assumed to be centred (use \code{center = TRUE}
+to centre them), and \code{X} must not contain a column of ones. The initial
+estimator is the scaled lasso (Sun and Zhang, 2012). When
+\code{p <= floor(n/2)}, \eqn{\hat\Theta} is the inverse of the Gram matrix, so
+the de-biased estimator equals the least-squares estimator (without
+intercept); otherwise \eqn{\hat\Theta} is estimated by the nodewise lasso.
 }
 \section{Nodewise tuning}{
 
@@ -42,6 +75,7 @@ archived versions exactly (same numbers under the same random seed).
 \examples{
 ## The function is intended for large n and p.
 ## Use small p here for illustration purpose only.
+set.seed(1)
 n <- 100
 p <- 10
 s0 <- 7
@@ -60,7 +94,13 @@ Zhang, X., and Cheng, G. (2017) Simultaneous Inference for
 High-dimensional Linear Models, \emph{Journal of the American Statistical
 Association}, 112, 757-768.
 
+Sun, T. and Zhang, C.-H. (2012). Scaled sparse linear regression.
+\emph{Biometrika}, 99, 879-898.
+
 Zhang, C.-H. and Zhang, S. S. (2014). Confidence intervals for low
 dimensional parameters in high dimensional linear models. \emph{Journal
 of the Royal Statistical Society, Series B}, 76, 217-242.
+}
+\seealso{
+\code{\link[=Sim.CI]{Sim.CI()}}, \code{\link[=Step]{Step()}}, \code{\link[=ST]{ST()}}, \code{\link[=Theta.hat]{Theta.hat()}}
 }

@@ -11,36 +11,72 @@ ST(
   test.set,
   M = 500,
   alpha = 0.05,
-  nodewise = c("cv", "ZnZ")
+  nodewise = c("cv", "ZnZ"),
+  center = FALSE,
+  legacy = FALSE,
+  parallel = FALSE,
+  ncores = getOption("mc.cores", 2L)
 )
 }
 \arguments{
-\item{X.f}{n times p design matrix.}
+\item{X.f}{Design matrix (n x p).}
 
-\item{Y.f}{Response variable.}
+\item{Y.f}{Response variable (length n).}
 
-\item{sub.size}{The sub-sample size used for screening.}
+\item{sub.size}{The size of the screening sub-sample \eqn{D_1}: a number
+of observations (\code{floor(sub.size)} is used), or a proportion of n if
+smaller than 1. Zhang and Cheng (2017) use n/5 to n/3.}
 
-\item{test.set}{The set of variables of interest.}
+\item{test.set}{The group of variables to be tested: column indices, or a
+logical vector of length p.}
 
 \item{M}{The number of bootstrap replications (default 500).}
 
-\item{alpha}{The nominal level alpha (default 0.05).}
+\item{alpha}{The significance level (default 0.05).}
 
 \item{nodewise}{Tuning rule for the nodewise lasso that estimates
-\eqn{\Theta} (the inverse of the Gram matrix) when \code{p > floor(n/2)}:
-\code{"cv"} (default) uses the lambda minimising 10-fold cross-validation
-error pooled over all nodewise regressions, as described in Zhang and
-Cheng (2017, Section 5); \code{"ZnZ"} refines that lambda with the rule of
-Zhang and Zhang (2014). See the section "Nodewise tuning" below.}
+\eqn{\Theta} on \eqn{D_2}: \code{"cv"} (default) or \code{"ZnZ"}; see \code{\link[=SR]{SR()}}.}
+
+\item{center}{Logical. If \code{TRUE}, \code{X.f} and \code{Y.f} are centred separately
+within each sub-sample before screening and testing. The default \code{FALSE}
+uses the data as given and warns when they do not appear to be centred.}
+
+\item{legacy}{Logical. If \code{TRUE}, reproduce SILM 1.0.0 exactly, including
+three behaviours that were corrected in SILM 2.0.0: the decision of the
+studentized test was spelled \code{"rejct"}; when \code{sub.size} left exactly
+\eqn{|D_2| - 1} variables selected by the screening lasso, one additional
+variable was kept; and when no variable of \code{test.set} survived the
+screening, the statistics were \code{-Inf} (now 0, with a warning).}
+
+\item{parallel, ncores}{Compute the nodewise regressions in parallel on
+\code{ncores} cores (forking; not on Windows). This does not change the
+results.}
 }
 \value{
-Values of the non-studentized and studentized statistics,
-and whether the tests get rejected at the level alpha.
+A list of four elements, in this order (note that the names are
+duplicated, as in SILM 1.0.0, so use positions):
+\enumerate{
+\item the non-studentized test statistic;
+\item its decision, \code{"reject"} or \code{"fail to reject"};
+\item the studentized test statistic;
+\item its decision.
+}
 }
 \description{
-This function implements the method for testing sparse signals in
-Zhang and Cheng (2017).
+Tests \eqn{H_{0,G}: \beta_j = 0} for all \eqn{j \in G} = \code{test.set}, a
+possibly large group of variables, with the three-step procedure of Zhang
+and Cheng (2017, Sections 3.2 and 5.3): (1) the sample is split at random
+into \eqn{D_1} of size \code{sub.size} and \eqn{D_2}; (2) on \eqn{D_1} the
+variables are screened (the cross-validated lasso selection, completed by
+the variables most correlated with the lasso residuals, \eqn{|D_2| - 1} in
+total); (3) on \eqn{D_2} the maximum of the de-biased lasso statistics over
+the screened variables in \eqn{G} is compared with a Gaussian multiplier
+bootstrap critical value. If no variable of \eqn{G} survives the screening,
+the test statistic is 0 and the hypothesis is not rejected.
+}
+\details{
+See \code{\link[=SR]{SR()}} for the model assumptions (no intercept, centred data). In ST the
+matrix \eqn{\Theta} is always estimated by the nodewise lasso.
 }
 \section{Nodewise tuning}{
 
@@ -58,6 +94,7 @@ archived versions exactly (same numbers under the same random seed).
 \examples{
 ## The function is intended for large n and p.
 ## Use small p here for illustration purpose only.
+set.seed(1)
 n <- 100
 p <- 10
 s0 <- 3
@@ -80,7 +117,13 @@ Zhang, X., and Cheng, G. (2017) Simultaneous Inference for
 High-dimensional Linear Models, \emph{Journal of the American Statistical
 Association}, 112, 757-768.
 
+Sun, T. and Zhang, C.-H. (2012). Scaled sparse linear regression.
+\emph{Biometrika}, 99, 879-898.
+
 Zhang, C.-H. and Zhang, S. S. (2014). Confidence intervals for low
 dimensional parameters in high dimensional linear models. \emph{Journal
 of the Royal Statistical Society, Series B}, 76, 217-242.
+}
+\seealso{
+\code{\link[=SR]{SR()}}, \code{\link[=Sim.CI]{Sim.CI()}}, \code{\link[=Step]{Step()}}
 }

@@ -1,0 +1,41 @@
+test_that("Theta and Z have the right shape and normalisation", {
+  d <- sim_data(n = 40, p = 30, seed = 21)
+  th <- SILM:::.nodewise(d$X, "Theta", do_znz = FALSE)
+  expect_equal(dim(th$out), c(30, 30))
+  z <- SILM:::.nodewise(d$X, "Z", do_znz = FALSE)
+  expect_equal(dim(z$out$Z), c(40, 30))
+  expect_equal(unname(colSums(z$out$Z * d$X) / 40), rep(1, 30), tolerance = 1e-10)
+})
+
+test_that("do_znz is required and Z&Z never increases lambda", {
+  d <- sim_data(n = 40, p = 30, seed = 22)
+  expect_error(SILM:::.nodewise(d$X, "Theta"), "do_znz")
+  set.seed(1)
+  cv <- SILM:::.nodewise(d$X, "Theta", do_znz = FALSE)
+  set.seed(1)
+  znz <- SILM:::.nodewise(d$X, "Theta", do_znz = TRUE)
+  expect_identical(cv$foldid, znz$foldid)
+  expect_lte(unname(znz$bestlambda), unname(cv$bestlambda))
+})
+
+test_that("the fold assignment is the only random draw and can be supplied", {
+  d <- sim_data(n = 40, p = 20, seed = 23)
+  s1 <- seed_after(5, SILM:::.nodewise(d$X, "Theta", do_znz = FALSE))
+  s2 <- seed_after(5, sample(rep(1:10, length = 40)))
+  expect_identical(s1, s2)
+  set.seed(5)
+  a <- SILM:::.nodewise(d$X, "Theta", do_znz = FALSE)
+  b <- SILM:::.nodewise(d$X, "Theta", do_znz = FALSE, foldid = a$foldid)
+  expect_identical(a$out, b$out)
+})
+
+test_that("parallel computation gives identical results", {
+  skip_on_os("windows")
+  skip_on_cran()
+  d <- sim_data(n = 40, p = 20, seed = 24)
+  set.seed(9)
+  seq_fit <- SILM:::.nodewise(d$X, "Theta", do_znz = TRUE)
+  set.seed(9)
+  par_fit <- SILM:::.nodewise(d$X, "Theta", do_znz = TRUE, parallel = TRUE, ncores = 2)
+  expect_identical(seq_fit$out, par_fit$out)
+})

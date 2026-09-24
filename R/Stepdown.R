@@ -1,38 +1,27 @@
 #' Stepdown Method for Multiple Testing
 #'
-#' This function implements the stepdown method in Zhang and Cheng (2017).
+#' Tests \eqn{H_{0,j}: \beta_j = 0} against two-sided alternatives for all
+#' \eqn{j = 1, \dots, p} with the bootstrap-assisted stepdown procedure of
+#' Zhang and Cheng (2017, Section 3.3, in the two-sided form used in Section
+#' 5.4), which controls the familywise error rate asymptotically at level
+#' `alpha`. Critical values are recomputed with fresh bootstrap draws at every
+#' step. Both the non-studentized and the studentized statistics are used.
 #'
-#' @param X n times p design matrix.
-#' @param Y Response variable.
-#' @param M The number of bootstrap replications (default 500).
-#' @param alpha The nominal level alpha (default 0.05).
-#' @param nodewise Tuning rule for the nodewise lasso that estimates
-#'   \eqn{\Theta} (the inverse of the Gram matrix) when `p > floor(n/2)`:
-#'   `"cv"` (default) uses the lambda minimising 10-fold cross-validation
-#'   error pooled over all nodewise regressions, as described in Zhang and
-#'   Cheng (2017, Section 5); `"ZnZ"` refines that lambda with the rule of
-#'   Zhang and Zhang (2014). See the section "Nodewise tuning" below.
-#' @return A vector indicating which hypotheses are being rejected.
-#' @section Nodewise tuning:
-#' SILM 1.0.0 obtained \eqn{\Theta} from an internal function of the 'hdi'
-#' package. With hdi 0.1-6, current when SILM 1.0.0 was released (January
-#' 2019), the tuning parameter was the cross-validated lambda (`"cv"`). hdi
-#' 0.1-7 (March 2019) changed the default of that internal function to the
-#' Z&Z rule, so from then until SILM was archived (July 2026) SILM computed
-#' `nodewise = "ZnZ"` without saying so. SILM now follows the paper by
-#' default; use `nodewise = "ZnZ"` to reproduce results obtained with SILM
-#' 1.0.0 and hdi 0.1-7 to 0.1-10. Both settings reproduce the respective
-#' archived versions exactly (same numbers under the same random seed).
-#' @references Zhang, X., and Cheng, G. (2017) Simultaneous Inference for
-#'   High-dimensional Linear Models, \emph{Journal of the American Statistical
-#'   Association}, 112, 757-768.
+#' See [SR()] for the model assumptions (no intercept, centred data) and the
+#' estimation of \eqn{\Theta}.
 #'
-#'   Zhang, C.-H. and Zhang, S. S. (2014). Confidence intervals for low
-#'   dimensional parameters in high dimensional linear models. \emph{Journal
-#'   of the Royal Statistical Society, Series B}, 76, 217-242.
+#' @inheritParams SR
+#' @param M The number of bootstrap replications per step (default 500).
+#' @param alpha The significance level (familywise error rate; default 0.05).
+#' @return A list with two integer vectors, `"non-studentized test"` and
+#'   `"studentized test"`: the indices of the rejected hypotheses.
+#' @inheritSection SR Nodewise tuning
+#' @inherit SR references
+#' @seealso [SR()], [Sim.CI()], [ST()]
 #' @examples
 #' ## The function is intended for large n and p.
 #' ## Use small p here for illustration purpose only.
+#' set.seed(1)
 #' n <- 100
 #' p <- 10
 #' s0 <- 3
@@ -46,62 +35,62 @@
 #' Y <- X%*%beta+rt(n,4)/sqrt(2)
 #' Step(X, Y, M=500, alpha=0.05)
 #' @export
-Step <- function(X, Y, M=500, alpha=0.05, nodewise = c("cv", "ZnZ")) {
+Step <- function(X, Y, M = 500, alpha = 0.05, nodewise = c("cv", "ZnZ"), center = FALSE,
+                 Theta = NULL, parallel = FALSE, ncores = getOption("mc.cores", 2L)) {
   nodewise <- match.arg(nodewise)
-  n <- dim(X)[1]
-  p <- dim(X)[2]
+  data <- .prepare_xy(X, Y, center)
+  .check_count(M)
+  .check_level(alpha)
+  X <- data$X
+  fit <- .silm_fit(X, data$Y, nodewise, Theta, .check_flag(parallel, "parallel"), ncores)
+  n <- fit$n
+  p <- fit$p
   count.st <- count.nst <- rep(1,p)
 
-  Gram <- t(X)%*%X/n
-  if (p > floor(n/2)) {
-     node <- .nodewise(X, what = "Theta", do_znz = identical(nodewise, "ZnZ"))
-     Theta <- node$out
-  } else {
-     Theta <- solve(Gram)
-  }
+  margin.test.nst <- sqrt(n)*abs(fit$beta.db)
+  margin.test.st <- sqrt(n)*abs(fit$beta.db)/sqrt(fit$Omega)
 
-  sreg <- .scaled_lasso(X,Y)
-  beta.hat <- sreg$coefficients
-  sigma.sq <- sum((Y-X%*%beta.hat)^2)/(n-sum(abs(beta.hat)>0))
-  beta.db <- beta.hat+Theta%*%t(X)%*%(Y-X%*%beta.hat)/n
-
-  Omega <- diag(Theta%*%Gram%*%t(Theta))*sigma.sq
-  margin.test.nst <- sqrt(n)*abs(beta.db)
-  margin.test.st <- sqrt(n)*abs(beta.db)/sqrt(Omega)
-
-  eta <- 1:p
-  stop.sd <- 1
-  while (stop.sd) {
-     stat.boot.nst <- rep(NA,M)
-     for (i in 1:M) {
-       e <- rnorm(n)
-       xi.boot <- Theta[eta,]%*%t(X)%*%e*sqrt(sigma.sq)/sqrt(n)
-       stat.boot.nst[i] <- max(abs(xi.boot))
-     }
-     crit.eta.nst <- quantile(stat.boot.nst,1-alpha)
-     rej.nst <- margin.test.nst[eta]<crit.eta.nst
-     if (sum(rej.nst)==length(rej.nst)) stop.sd <- 0 else eta <- eta[rej.nst]
-  }
+  eta <- .stepdown(fit, X, margin.test.nst, M, alpha, studentized = FALSE)
   count.nst[eta] <- 0
-
-  eta2 <- 1:p
-  stop.sd2 <- 1
-  while (stop.sd2) {
-    stat.boot.st <- rep(NA,M)
-     for (i in 1:M) {
-       e <- rnorm(n)
-       xi.boot <- Theta[eta2,]%*%t(X)%*%e*sqrt(sigma.sq)/sqrt(n)
-       stat.boot.st[i] <- max(abs(xi.boot)/sqrt(Omega[eta2]))
-     }
-     crit.eta.st <- quantile(stat.boot.st,1-alpha)
-     rej.st <- margin.test.st[eta2]<crit.eta.st
-     if (sum(rej.st)==length(rej.st)) stop.sd2 <- 0 else eta2 <- eta2[rej.st]
-  }
+  eta2 <- .stepdown(fit, X, margin.test.st, M, alpha, studentized = TRUE)
   count.st[eta2] <- 0
 
   rej.nst <- (1:p)[count.nst==1]
   rej.st <- (1:p)[count.st==1]
   result <- list(rej.nst, rej.st)
   names(result) <- c("non-studentized test", "studentized test")
-  return(result)
+  result
+}
+
+# One stepdown sequence. Returns the indices of the hypotheses that are NOT
+# rejected. When every hypothesis gets rejected, SILM 1.0.0 performed one more
+# (empty) bootstrap pass; its draws are skipped here but consumed from the RNG
+# stream, so the results and the RNG state are unchanged.
+.stepdown <- function(fit, X, margin, M, alpha, studentized) {
+  n <- fit$n
+  Theta <- fit$Theta
+  sigma.sq <- fit$sigma.sq
+  Omega <- fit$Omega
+  eta <- 1:fit$p
+  stop.sd <- 1
+  while (stop.sd) {
+    stat.boot <- rep(NA,M)
+    for (i in 1:M) {
+      e <- rnorm(n)
+      xi.boot <- Theta[eta,]%*%t(X)%*%e*sqrt(sigma.sq)/sqrt(n)
+      stat.boot[i] <- if (studentized) max(abs(xi.boot)/sqrt(Omega[eta])) else max(abs(xi.boot))
+    }
+    crit.eta <- quantile(stat.boot,1-alpha)
+    keep <- margin[eta]<crit.eta
+    if (sum(keep)==length(keep)) {
+      stop.sd <- 0
+    } else {
+      eta <- eta[keep]
+      if (!length(eta)) {
+        .burn_rnorm(n * M)
+        stop.sd <- 0
+      }
+    }
+  }
+  eta
 }

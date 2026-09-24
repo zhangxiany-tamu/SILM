@@ -4,16 +4,27 @@
 \alias{Step}
 \title{Stepdown Method for Multiple Testing}
 \usage{
-Step(X, Y, M = 500, alpha = 0.05, nodewise = c("cv", "ZnZ"))
+Step(
+  X,
+  Y,
+  M = 500,
+  alpha = 0.05,
+  nodewise = c("cv", "ZnZ"),
+  center = FALSE,
+  Theta = NULL,
+  parallel = FALSE,
+  ncores = getOption("mc.cores", 2L)
+)
 }
 \arguments{
-\item{X}{n times p design matrix.}
+\item{X}{Design matrix (n x p).}
 
-\item{Y}{Response variable.}
+\item{Y}{Response variable (a numeric vector of length n, or an n x 1
+matrix).}
 
-\item{M}{The number of bootstrap replications (default 500).}
+\item{M}{The number of bootstrap replications per step (default 500).}
 
-\item{alpha}{The nominal level alpha (default 0.05).}
+\item{alpha}{The significance level (familywise error rate; default 0.05).}
 
 \item{nodewise}{Tuning rule for the nodewise lasso that estimates
 \eqn{\Theta} (the inverse of the Gram matrix) when \code{p > floor(n/2)}:
@@ -21,12 +32,34 @@ Step(X, Y, M = 500, alpha = 0.05, nodewise = c("cv", "ZnZ"))
 error pooled over all nodewise regressions, as described in Zhang and
 Cheng (2017, Section 5); \code{"ZnZ"} refines that lambda with the rule of
 Zhang and Zhang (2014). See the section "Nodewise tuning" below.}
+
+\item{center}{Logical. If \code{TRUE}, the columns of \code{X} and \code{Y} are centred
+before the analysis. The default \code{FALSE} uses the data as given (as SILM
+1.0.0 did) and warns when they do not appear to be centred.}
+
+\item{Theta}{Optional precomputed \eqn{\hat\Theta} (a p x p matrix, e.g.
+from \code{\link[=Theta.hat]{Theta.hat()}}) to avoid recomputing it. Note that supplying it skips
+the random draw of the nodewise cross-validation folds.}
+
+\item{parallel, ncores}{Compute the nodewise regressions in parallel on
+\code{ncores} cores (forking; not on Windows). This does not change the
+results.}
 }
 \value{
-A vector indicating which hypotheses are being rejected.
+A list with two integer vectors, \code{"non-studentized test"} and
+\code{"studentized test"}: the indices of the rejected hypotheses.
 }
 \description{
-This function implements the stepdown method in Zhang and Cheng (2017).
+Tests \eqn{H_{0,j}: \beta_j = 0} against two-sided alternatives for all
+\eqn{j = 1, \dots, p} with the bootstrap-assisted stepdown procedure of
+Zhang and Cheng (2017, Section 3.3, in the two-sided form used in Section
+5.4), which controls the familywise error rate asymptotically at level
+\code{alpha}. Critical values are recomputed with fresh bootstrap draws at every
+step. Both the non-studentized and the studentized statistics are used.
+}
+\details{
+See \code{\link[=SR]{SR()}} for the model assumptions (no intercept, centred data) and the
+estimation of \eqn{\Theta}.
 }
 \section{Nodewise tuning}{
 
@@ -44,6 +77,7 @@ archived versions exactly (same numbers under the same random seed).
 \examples{
 ## The function is intended for large n and p.
 ## Use small p here for illustration purpose only.
+set.seed(1)
 n <- 100
 p <- 10
 s0 <- 3
@@ -62,7 +96,13 @@ Zhang, X., and Cheng, G. (2017) Simultaneous Inference for
 High-dimensional Linear Models, \emph{Journal of the American Statistical
 Association}, 112, 757-768.
 
+Sun, T. and Zhang, C.-H. (2012). Scaled sparse linear regression.
+\emph{Biometrika}, 99, 879-898.
+
 Zhang, C.-H. and Zhang, S. S. (2014). Confidence intervals for low
 dimensional parameters in high dimensional linear models. \emph{Journal
 of the Royal Statistical Society, Series B}, 76, 217-242.
+}
+\seealso{
+\code{\link[=SR]{SR()}}, \code{\link[=Sim.CI]{Sim.CI()}}, \code{\link[=ST]{ST()}}
 }

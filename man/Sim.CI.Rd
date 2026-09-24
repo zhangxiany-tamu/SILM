@@ -2,20 +2,34 @@
 % Please edit documentation in R/Sim_CI.R
 \name{Sim.CI}
 \alias{Sim.CI}
-\title{Simultaneous Confidence Interval}
+\title{Simultaneous Confidence Intervals}
 \usage{
-Sim.CI(X, Y, set, M = 500, alpha = 0.95, nodewise = c("cv", "ZnZ"))
+Sim.CI(
+  X,
+  Y,
+  set,
+  M = 500,
+  alpha = 0.95,
+  nodewise = c("cv", "ZnZ"),
+  center = FALSE,
+  Theta = NULL,
+  parallel = FALSE,
+  ncores = getOption("mc.cores", 2L)
+)
 }
 \arguments{
-\item{X}{n times p design matrix.}
+\item{X}{Design matrix (n x p).}
 
-\item{Y}{Response variable.}
+\item{Y}{Response variable (a numeric vector of length n, or an n x 1
+matrix).}
 
-\item{set}{The set of variables of interest.}
+\item{set}{The set of variables of interest: column indices of \code{X}, or a
+logical vector of length p.}
 
 \item{M}{The number of bootstrap replications (default 500).}
 
-\item{alpha}{The nominal level alpha (default 0.95).}
+\item{alpha}{The confidence level of the simultaneous intervals (default
+0.95).}
 
 \item{nodewise}{Tuning rule for the nodewise lasso that estimates
 \eqn{\Theta} (the inverse of the Gram matrix) when \code{p > floor(n/2)}:
@@ -23,15 +37,43 @@ Sim.CI(X, Y, set, M = 500, alpha = 0.95, nodewise = c("cv", "ZnZ"))
 error pooled over all nodewise regressions, as described in Zhang and
 Cheng (2017, Section 5); \code{"ZnZ"} refines that lambda with the rule of
 Zhang and Zhang (2014). See the section "Nodewise tuning" below.}
+
+\item{center}{Logical. If \code{TRUE}, the columns of \code{X} and \code{Y} are centred
+before the analysis. The default \code{FALSE} uses the data as given (as SILM
+1.0.0 did) and warns when they do not appear to be centred.}
+
+\item{Theta}{Optional precomputed \eqn{\hat\Theta} (a p x p matrix, e.g.
+from \code{\link[=Theta.hat]{Theta.hat()}}) to avoid recomputing it. Note that supplying it skips
+the random draw of the nodewise cross-validation folds.}
+
+\item{parallel, ncores}{Compute the nodewise regressions in parallel on
+\code{ncores} cores (forking; not on Windows). This does not change the
+results.}
 }
 \value{
-The de-biased Lasso estimator, the confidence bands (lower bound and
-upper bound) delivered by the non-studentized and the studentized
-statistics.
+A list with three components:
+\item{de-biased Lasso}{the de-biased lasso estimates of \eqn{\beta_j},
+\eqn{j \in} \code{set};}
+\item{band.nst}{a 2 x |\code{set}| matrix whose rows \code{low.nst} and \code{up.nst}
+are the lower and upper bounds of the intervals from the
+non-studentized statistic;}
+\item{band.st}{the same for the studentized statistic (rows \code{low.st},
+\code{up.st}).}
 }
 \description{
-This function implements the method for constructing simultaneous confidence
-interval in Zhang and Cheng (2017).
+Constructs simultaneous confidence intervals for \eqn{\beta_j},
+\eqn{j \in} \code{set}, based on the de-biased lasso and a Gaussian multiplier
+bootstrap of the maximum statistic (Zhang and Cheng, 2017, Section 2).
+Both the non-studentized and the studentized versions are returned.
+}
+\details{
+\strong{Note on \code{alpha}.} Unlike \code{\link[=ST]{ST()}} and \code{\link[=Step]{Step()}}, where \code{alpha} is the
+significance level, here \code{alpha} is the \strong{confidence level} of the
+simultaneous intervals (default 0.95, i.e. 95\\% intervals). This is kept for
+compatibility with SILM 1.0.0; a value below 0.5 triggers a warning.
+
+See \code{\link[=SR]{SR()}} for the model assumptions (no intercept, centred data) and the
+estimation of \eqn{\Theta}.
 }
 \section{Nodewise tuning}{
 
@@ -49,6 +91,7 @@ archived versions exactly (same numbers under the same random seed).
 \examples{
 ## The function is intended for large n and p.
 ## Use small p here for illustration purpose only.
+set.seed(1)
 n <- 100
 p <- 10
 s0 <- 3
@@ -67,7 +110,14 @@ Zhang, X., and Cheng, G. (2017) Simultaneous Inference for
 High-dimensional Linear Models, \emph{Journal of the American Statistical
 Association}, 112, 757-768.
 
+Sun, T. and Zhang, C.-H. (2012). Scaled sparse linear regression.
+\emph{Biometrika}, 99, 879-898.
+
 Zhang, C.-H. and Zhang, S. S. (2014). Confidence intervals for low
 dimensional parameters in high dimensional linear models. \emph{Journal
 of the Royal Statistical Society, Series B}, 76, 217-242.
+}
+\seealso{
+\code{\link[=SR]{SR()}}, \code{\link[=Step]{Step()}}, \code{\link[=ST]{ST()}}, \code{\link[=boot.lasso.proj]{boot.lasso.proj()}} for the bootstrapped
+de-sparsified lasso of Dezeure, Bühlmann and Zhang (2017).
 }
