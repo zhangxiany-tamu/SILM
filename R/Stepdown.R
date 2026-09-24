@@ -75,9 +75,10 @@ Step <- function(X, Y, M = 500, alpha = 0.05, nodewise = c("cv", "ZnZ"), center 
   stop.sd <- 1
   while (stop.sd) {
     stat.boot <- rep(NA,M)
+    A <- Theta[eta, , drop = FALSE]%*%t(X)
     for (i in 1:M) {
       e <- rnorm(n)
-      xi.boot <- Theta[eta,]%*%t(X)%*%e*sqrt(sigma.sq)/sqrt(n)
+      xi.boot <- A%*%e*sqrt(sigma.sq)/sqrt(n)
       stat.boot[i] <- if (studentized) max(abs(xi.boot)/sqrt(Omega[eta])) else max(abs(xi.boot))
     }
     crit.eta <- quantile(stat.boot,1-alpha)

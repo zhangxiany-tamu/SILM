@@ -139,10 +139,11 @@ ST <- function(X.f, Y.f, sub.size, test.set, M = 500, alpha = 0.05,
   stat.st <- max(margin.st)
   stat.nst <- max(margin.nst)
 
+  A <- Theta[index, , drop = FALSE]%*%t(X)
   stat.boot.st <- stat.boot.nst <- rep(NA,M)
   for (i in 1:M) {
     e <- rnorm(n0)
-    xi.boot <- Theta[index,]%*%t(X)%*%e*sqrt(sigma.sq)/sqrt(n0)
+    xi.boot <- A%*%e*sqrt(sigma.sq)/sqrt(n0)
     stat.boot.nst[i] <- max(abs(xi.boot))
     stat.boot.st[i] <- max(abs(xi.boot/sqrt(Omega[index])))
   }

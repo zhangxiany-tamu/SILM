@@ -68,10 +68,13 @@ Sim.CI <- function(X, Y, set, M = 500, alpha = 0.95, nodewise = c("cv", "ZnZ"),
   beta.db <- fit$beta.db
   Omega <- fit$Omega
 
+  # Theta[set, ] %*% t(X) does not depend on the draw; computing it once gives
+  # the same products as SILM 1.0.0, which recomputed it for every draw.
+  A <- Theta[set, , drop = FALSE]%*%t(X)
   stat.boot.st <- stat.boot.nst <- rep(NA,M)
   for (i in 1:M) {
     e <- rnorm(n)
-    xi.boot <- Theta[set,]%*%t(X)%*%e*sqrt(sigma.sq)/sqrt(n)
+    xi.boot <- A%*%e*sqrt(sigma.sq)/sqrt(n)
     stat.boot.nst[i] <- max(abs(xi.boot))
     stat.boot.st[i] <- max(abs(xi.boot)/sqrt(Omega[set]))
   }
