@@ -17,7 +17,7 @@ Description: Simultaneous inference procedures for high-dimensional linear
     models as described by Zhang, X., and Cheng, G. (2017)
     <doi:10.1080/01621459.2016.1166114>.
 Depends: R (>= 4.1.0)
-Imports: glmnet (>= 4.1), lars, parallel, stats, utils
+Imports: glmnet (>= 4.1), lars, MASS, parallel, stats, utils
 Suggests: testthat (>= 3.0.0), withr
 Config/testthat/edition: 3
 License: GPL-3
