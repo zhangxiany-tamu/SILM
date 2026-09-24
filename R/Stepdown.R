@@ -30,18 +30,16 @@ Step <- function(X, Y, M=500, alpha=0.05) {
   n <- dim(X)[1]
   p <- dim(X)[2]
   count.st <- count.nst <- rep(1,p)
-  score.nodewiselasso = getFromNamespace("score.nodewiselasso", "hdi")
 
   Gram <- t(X)%*%X/n
   if (p > floor(n/2)) {
-     node <- score.nodewiselasso(X, wantTheta=TRUE, verbose=FALSE, lambdaseq="quantile",
-     parallel=FALSE, ncores=2, oldschool = FALSE, lambdatuningfactor = 1)
+     node <- .nodewise(X, what = "Theta", do_znz = TRUE)
      Theta <- node$out
   } else {
      Theta <- solve(Gram)
   }
 
-  sreg <- scalreg(X,Y)
+  sreg <- .scaled_lasso(X,Y)
   beta.hat <- sreg$coefficients
   sigma.sq <- sum((Y-X%*%beta.hat)^2)/(n-sum(abs(beta.hat)>0))
   beta.db <- beta.hat+Theta%*%t(X)%*%(Y-X%*%beta.hat)/n

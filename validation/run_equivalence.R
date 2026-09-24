@@ -8,6 +8,8 @@
 #   --self-test     new side = current repository code that still depends on
 #                   the archived packages (harness sanity check before the
 #                   dependencies are removed); only "znz" scenarios are run.
+#   --no-new-args   call the new functions with the old signatures only
+#                   ("znz" scenarios; used before the nodewise argument exists).
 #   --with-legacy-deps  also give the new side access to the archived packages
 #                   (needed while the repository still declares them).
 #   --glmnet cran   use the current CRAN glmnet from lib-glmnet-5.0 (default);
@@ -21,7 +23,7 @@ for (f in list.files(file.path("validation", "scenarios"), pattern = "\\.R$", fu
 parse_args <- function(args) {
   opt <- list(tier = "fast", cores = 8L, only = NULL, glmnet = "cran", self_test = FALSE,
               st_legacy = TRUE, modes = c("znz", "cv"), report_dir = file.path("validation", "reports"),
-              chunk = 6L, legacy_deps = FALSE)
+              chunk = 6L, legacy_deps = FALSE, no_new_args = FALSE)
   i <- 1L
   while (i <= length(args)) {
     a <- args[i]
@@ -36,19 +38,20 @@ parse_args <- function(args) {
       "--chunk" = { opt$chunk <- as.integer(val); i <- i + 1L },
       "--self-test" = { opt$self_test <- TRUE },
       "--with-legacy-deps" = { opt$legacy_deps <- TRUE },
+      "--no-new-args" = { opt$no_new_args <- TRUE },
       "--no-st-legacy" = { opt$st_legacy <- FALSE },
       stop("unknown argument: ", a)
     )
     i <- i + 1L
   }
-  if (opt$self_test) opt$modes <- "znz"
+  if (opt$self_test || opt$no_new_args) opt$modes <- "znz"
   opt
 }
 
 all_scenarios <- function(opt) {
   sc <- list()
   if (exists("unit_scenarios") && !opt$self_test) sc <- c(sc, unit_scenarios(opt$tier))
-  sc <- c(sc, core_scenarios(opt$tier, opt$modes, opt$self_test, opt$st_legacy))
+  sc <- c(sc, core_scenarios(opt$tier, opt$modes, opt$self_test || opt$no_new_args, opt$st_legacy))
   if (exists("hdi_scenarios") && !opt$self_test) sc <- c(sc, hdi_scenarios(opt$tier))
   if (!is.null(opt$only)) sc <- Filter(function(s) grepl(opt$only, s$id), sc)
   sc

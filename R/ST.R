@@ -47,20 +47,18 @@ ST <- function(X.f, Y.f, sub.size, test.set, M=500, alpha=0.05) {
   cf <- as.numeric(coef(cvfit, s="lambda.min"))[-1]
   set1 <- (1:p)[abs(cf)>0]
   resi <- Y.sub-X.sub%*%cf
-  beta.m <- t(standardize(X.sub[,-set1]))%*%resi
+  beta.m <- t(.standardize_unitnorm(X.sub[,-set1]))%*%resi
   screen.set <- sort(order(abs(beta.m),decreasing=TRUE)[1:(n0-1-length(set1))])
   a <- (1:p)[-set1]
   screen.set <- union(a[screen.set],set1)
   X <- X.f[-S1,screen.set]
   Y <- Y.f[-S1]
 
-  score.nodewiselasso = getFromNamespace("score.nodewiselasso", "hdi")
-  node <- score.nodewiselasso(X, wantTheta=TRUE, verbose=FALSE, lambdaseq="quantile",
-  parallel=FALSE, ncores=2, oldschool = FALSE, lambdatuningfactor = 1)
+  node <- .nodewise(X, what = "Theta", do_znz = TRUE)
   Theta <- node$out
   Gram<-t(X)%*%X/n0
 
-  sreg <- scalreg(X,Y)
+  sreg <- .scaled_lasso(X,Y)
   beta.hat <- sreg$coefficients
   sigma.sq <- sum((Y-X%*%beta.hat)^2)/(n0-sum(abs(beta.hat)>0))
   test.set.i <- intersect(screen.set,test.set)
