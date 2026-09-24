@@ -23,6 +23,8 @@ test_that("results reproduce the archived SILM 1.0.0 / hdi 0.1-10 / scalreg 1.0.
       expect_equal(new_value, old_value, tolerance = 1e-8, info = info)
     }
     # The random number stream is consumed identically on every platform.
-    expect_identical(new$seed_after, fx$seed_after, info = info)
+    # (.Random.seed[1] encodes the RNG kinds; R-devel changed its encoding,
+    # so only the generator state is compared.)
+    expect_identical(new$seed_after[-1], fx$seed_after[-1], info = info)
   }
 })
