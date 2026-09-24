@@ -9,7 +9,11 @@
   n <- dim(X)[1]
   p <- dim(X)[2]
   if (force_nodewise || p > floor(n / 2)) {
-    if (p < 2L) .stop("The nodewise lasso needs at least 2 columns.")
+    if (p < 3L) .stop("The nodewise lasso needs at least 3 columns.")
+    if (n < 10L) {
+      .stop("The nodewise lasso needs at least 10 observations (it uses 10-fold ",
+            "cross-validation).")
+    }
     constant <- .constant_columns(X)
     if (length(constant)) {
       .stop("Column(s) ", .column_labels(X, constant), " of the design are constant; ",
@@ -34,17 +38,30 @@
 .strip_theta_attr <- function(Theta) {
   attr(Theta, "lambda") <- NULL
   attr(Theta, "method") <- NULL
+  attr(Theta, "center") <- NULL
   Theta
 }
 
+# A Theta from Theta.hat() records whether X was centred; warn on a mismatch.
+.check_theta_center <- function(Theta, center) {
+  used <- attr(Theta, "center")
+  if (!is.null(used) && !identical(used, center)) {
+    warning("'Theta' was computed with center = ", used, " but is used with center = ",
+            center, "; compute it with Theta.hat(X, center = ", center, ").", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
 # Scaled lasso, variance estimate, de-biased lasso and its variances.
-.silm_fit <- function(X, Y, nodewise, Theta = NULL, parallel = FALSE, ncores = 1L) {
+.silm_fit <- function(X, Y, nodewise, Theta = NULL, parallel = FALSE, ncores = 1L,
+                      center = FALSE) {
   n <- dim(X)[1]
   p <- dim(X)[2]
   Gram <- t(X)%*%X/n
   Theta <- if (is.null(Theta)) {
     .strip_theta_attr(.silm_theta(X, Gram, nodewise, parallel = parallel, ncores = ncores))
   } else {
+    .check_theta_center(Theta, center)
     .strip_theta_attr(.check_theta(Theta, p))
   }
 

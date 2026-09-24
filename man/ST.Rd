@@ -28,7 +28,8 @@ of observations (\code{floor(sub.size)} is used), or a proportion of n if
 smaller than 1. Zhang and Cheng (2017) use n/5 to n/3.}
 
 \item{test.set}{The group of variables to be tested: column indices, or a
-logical vector of length p.}
+logical vector of length p. Entries that are not column indices are
+ignored with a warning (SILM 1.0.0 ignored them silently).}
 
 \item{M}{The number of bootstrap replications (default 500).}
 

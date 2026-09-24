@@ -35,10 +35,11 @@ run_proj <- function(pkg, d, a) {
   # hdi's parallel bootstrap drew random numbers in worker processes and is not
   # reproducible; SILM's parallel results must equal hdi's sequential ones.
   if (pkg == "hdi" && identical(a$fun, "boot.lasso.proj")) call$parallel <- NULL
-  args <- c(list(d$x, d$y), call)
+  y <- if (identical(a$label, "logical-y")) d$y > 0 else d$y
+  args <- c(list(d$x, y), call)
   if (!is.null(a$Z_from)) {
     # Z computed by a first call with return.Z = TRUE (same package).
-    zfit <- do.call(fun, c(list(d$x, d$y), a$Z_from, list(return.Z = TRUE)))
+    zfit <- do.call(fun, c(list(d$x, y), a$Z_from, list(return.Z = TRUE)))
     args$Z <- zfit$Z
   }
   if (pkg == "SILM") args <- c(args, a$new_args)
@@ -109,7 +110,9 @@ lasso_proj_configs <- function() {
     L("N=2000-WY", list(multiplecorr.method = "WY", N = 2000)),
     L("parallel-2", list(parallel = TRUE, ncores = 2)),
     L("verbose", list(verbose = TRUE)),
-    L("rng-3.5.0", list(), rng = "3.5.0")
+    L("rng-3.5.0", list(), rng = "3.5.0"),
+    L("robust=1", list(robust = 1)),
+    L("logical-y", list(), ci = TRUE)
   )
 }
 

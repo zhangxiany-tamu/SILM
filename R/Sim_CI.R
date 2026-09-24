@@ -61,7 +61,8 @@ Sim.CI <- function(X, Y, set, M = 500, alpha = 0.95, nodewise = c("cv", "ZnZ"),
             "did you mean alpha = ", 1 - alpha, "?", call. = FALSE)
   }
   X <- data$X
-  fit <- .silm_fit(X, data$Y, nodewise, Theta, .check_flag(parallel, "parallel"), ncores)
+  fit <- .silm_fit(X, data$Y, nodewise, Theta, .check_flag(parallel, "parallel"), ncores,
+                   center = center)
   n <- fit$n
   Theta <- fit$Theta
   sigma.sq <- fit$sigma.sq

@@ -48,7 +48,9 @@ lambda.1se from 10-fold cross-validation), \code{"scaled lasso"}, or a numeric
 vector of coefficients for the centred (and scaled) design, which requires
 \code{sigma}.}
 
-\item{sigma}{Optional noise standard deviation, overriding the estimate.}
+\item{sigma}{Optional noise standard deviation, overriding the estimate
+(not used with \code{robust = TRUE}, whose standard errors do not involve it,
+nor for \code{family = "binomial"}).}
 
 \item{Z}{Optional matrix of nodewise residuals (e.g. from a previous call
 with \code{return.Z = TRUE}) to skip the nodewise lasso. This also skips the
@@ -114,8 +116,9 @@ session are unaffected.
 mean-centring, which leaves it in the model when the weights vary and
 biases the estimates and the confidence intervals. SILM projects out the
 intercept direction \eqn{\sqrt{w}} instead. Use \code{legacy = TRUE} to obtain
-hdi's results. For both families a logical or two-level factor response
-is accepted.
+hdi's results. For \code{family = "binomial"} a logical or two-level factor
+response is also accepted (with or without \code{legacy}); for \code{"gaussian"}, a
+logical response is used as 0/1, as in hdi.
 \item Arguments are checked before the computations start.
 }
 

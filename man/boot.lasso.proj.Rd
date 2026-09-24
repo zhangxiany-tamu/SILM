@@ -48,7 +48,9 @@ of \code{\link[stats:p.adjust]{stats::p.adjust()}}.}
 
 \item{betainit}{\code{"cv lasso"} (default) or \code{"scaled lasso"}.}
 
-\item{sigma}{Optional noise standard deviation, overriding the estimate.}
+\item{sigma}{Optional noise standard deviation, overriding the estimate
+(not used with \code{robust = TRUE}, whose standard errors do not involve it,
+nor for \code{family = "binomial"}).}
 
 \item{Z}{Optional matrix of nodewise residuals (e.g. from a previous call
 with \code{return.Z = TRUE}) to skip the nodewise lasso. This also skips the
@@ -94,15 +96,20 @@ with the elements of hdi's result, in the same order, \code{pval},
 \code{pval.corr}, \code{sigmahat}, \code{standardize}, \code{sds}, \code{bhat}, \code{se}, \code{betahat},
 \code{family}, \code{method} (\code{"boot.lasso.proj"}), \code{B}, \code{boot.shortcut}, \code{lambda},
 \code{call}, \code{Z} (if \code{return.Z = TRUE}), \code{cboot.dist} and
-\code{cboot.dist.underH0c} (if \code{return.bootdist = TRUE}: the bootstrap
-distributions of the estimator on the scale of \code{bhat}, centred and under
-the complete null hypothesis), followed by the SILM additions
-\code{boot.type}, \code{multiplier}, \code{robust}, \code{gaussian.stub}, \code{B.eff} (number of
-usable bootstrap samples), \code{tstat} (the studentized statistics),
-\code{boot.summary} (per bootstrap sample, the maximum, minimum and maximal
-absolute value of the studentized bootstrap statistics, and the maximal
-absolute value under the complete null hypothesis), \code{group.summary} and
-\code{boot.index}.
+\code{cboot.dist.underH0c} (if \code{return.bootdist = TRUE}: p x B matrices of
+\eqn{\hat{s.e.}_j T^*_j}{se_j T*_j}, where
+\eqn{T^*_j = (\hat b^*_j - \hat\beta_j)/\hat{s.e.}^*_j}{T*_j = (b*_j - betahat_j)/se*_j}
+is the studentized centred bootstrap statistic, and the same under the
+complete null hypothesis, on the scale of \code{bhat}, as in hdi), followed by
+the SILM additions \code{boot.type}, \code{multiplier}, \code{robust}, \code{gaussian.stub},
+\code{B.eff} (number of bootstrap samples used; smaller than \code{B} only when
+xyz-paired samples had to be discarded), \code{tstat} (the studentized
+statistics \eqn{\hat b_j/\hat{s.e.}_j}{b_j / se_j}), \code{boot.summary} (per
+bootstrap sample, the maximum, minimum and maximal absolute value of the
+\eqn{T^*_j}{T*_j}, and the maximal absolute value under the complete null
+hypothesis), \code{group.summary} (the same per group in \code{groups}) and
+\code{boot.index} (xyz-paired bootstrap with \code{return.bootdist = TRUE}: the
+resampled rows, one column per column of \code{cboot.dist}).
 }
 \description{
 Bootstraps the entire de-sparsified lasso (initial lasso fit included) to
@@ -166,7 +173,10 @@ third moment of the errors.
 resamples rows of the design, the response and the nodewise residuals
 after a correction that makes the bootstrap errors orthogonal to them.
 It is defined with \code{robust = TRUE}; the paper reports that it is less
-competitive than the Gaussian wild bootstrap.
+competitive than the Gaussian wild bootstrap. When the lasso is re-tuned
+by cross-validation, the folds are formed by original observation, since
+resampled rows are duplicated. Bootstrap samples with a degenerate
+normaliser \eqn{Z^{*\top}_j X^*_j/n}{Z*_j'X*_j/n} are discarded (\code{B.eff}).
 \item Simultaneous confidence intervals (eq. 10) via
 \code{confint(fit, type = "simultaneous")} and group tests via \code{\link[=groupTest]{groupTest()}}.
 }

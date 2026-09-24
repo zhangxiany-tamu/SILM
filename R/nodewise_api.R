@@ -37,13 +37,14 @@
 #' @param lambdatuningfactor Multiplier for lambda.min, or `"lambda.1se"`.
 #' @param parallel,ncores Parallel execution over columns (no effect on the
 #'   results; never used on Windows).
-#' @param verbose Print progress information.
+#' @param verbose Print diagnostic information (lambda grid, chosen lambda).
+#' @param cv_verbose Print the progress of the cross-validation.
 #' @return A list with `out` (Theta, or `list(Z, scaleZ)`), `bestlambda`,
 #'   `lambdas`, `lambda.min`, `lambda.1se` and `foldid`.
 #' @noRd
 .nodewise <- function(x, what = c("Theta", "Z"), do_znz, K = 10L, foldid = NULL,
                       lambdatuningfactor = 1, parallel = FALSE, ncores = 1L,
-                      verbose = FALSE) {
+                      verbose = FALSE, cv_verbose = verbose) {
   what <- match.arg(what)
   if (missing(do_znz) || !is.logical(do_znz) || length(do_znz) != 1L || is.na(do_znz)) {
     stop("'do_znz' must be TRUE or FALSE.", call. = FALSE)
@@ -52,7 +53,7 @@
   if (verbose) cat("Using the following lambda values:", lambdas, "\n")
 
   cv <- cv.nodewise.bestlambda(lambdas = lambdas, x = x, K = K, foldid = foldid,
-                               parallel = parallel, ncores = ncores, verbose = verbose)
+                               parallel = parallel, ncores = ncores, verbose = cv_verbose)
   if (verbose) {
     cat(paste("lambda.min is", cv$lambda.min), "\n")
     cat(paste("lambda.1se is", cv$lambda.1se), "\n")
@@ -102,8 +103,10 @@ calculate.Z <- function(x, parallel, ncores, verbose, Z, do.ZnZ = FALSE, foldid 
       message("You can store Z to avoid the majority of the computation next time around.")
       message("Z only depends on the design matrix x.")
     }
+    # As in hdi, `verbose` only shows the progress of the cross-validation.
     nodewise <- .nodewise(x, what = "Z", do_znz = do.ZnZ, foldid = foldid,
-                          parallel = parallel, ncores = ncores, verbose = verbose)
+                          parallel = parallel, ncores = ncores, verbose = FALSE,
+                          cv_verbose = verbose)
     return(list(Z = nodewise$out$Z, scaleZ = nodewise$out$scaleZ))
   }
   scaleZ <- rep(1, ncol(Z))

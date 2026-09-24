@@ -13,10 +13,14 @@
 # (for Westfall-Young and group p-values) uses the same rows with response e.
 #
 # Conventions where the paper is not explicit (see dev/DESIGN.md, Appendix C):
-# each bootstrap sample is centred (without rescaling) before fitting, as the
-# original data were; the nodewise residuals are rescaled so that
-# Z*_j' X*_j / n = 1, which is the plug-in normaliser of the paper; samples
-# with a non-positive normaliser are discarded (reported in B.eff).
+# - each bootstrap sample is centred (without rescaling) before fitting, as the
+#   original data were;
+# - the nodewise residuals are divided by the plug-in normaliser Z*_j' X*_j / n
+#   (signed in b*, in absolute value in se*, as in the paper); samples with a
+#   non-finite or numerically zero normaliser are discarded (see B.eff);
+# - when the lasso is re-tuned by cross-validation, the folds are formed by
+#   original observation, so that copies of a resampled row never fall into
+#   both the training and the test folds (which would bias lambda downwards).
 
 .xyz_hats <- function(x, Z, betalasso, e) {
   s2 <- sum(e^2)
@@ -32,9 +36,22 @@
 # Row indices of the bootstrap samples (n x B matrix).
 .xyz_index <- function(n, B) replicate(B, sample.int(n, n, replace = TRUE))
 
-# Studentized statistics of one xyz bootstrap sample.
+# Cross-validation folds for a paired bootstrap sample: one fold per original
+# observation, drawn as cv.glmnet() draws folds for the distinct rows.
+.xyz_foldid <- function(rows, K = 10) {
+  distinct <- unique(rows)
+  sample(rep(seq(K), length = length(distinct)))[match(rows, distinct)]
+}
+
+# Studentized statistics of one xyz bootstrap sample (NA if the sample has to
+# be discarded).
 .xyz_draw <- function(rows, hats, yvec, truth, betainit, lambda, robust, foldid = NULL) {
   n <- length(rows)
+  # The folds are drawn first, so that the random number stream does not
+  # depend on which samples are discarded (parallel runs pre-draw them).
+  if (is.null(foldid) && identical(betainit, "cv lasso") && is.null(lambda)) {
+    foldid <- .xyz_foldid(rows)
+  }
   xs <- hats$xhat[rows, , drop = FALSE]
   zs <- hats$zhat[rows, , drop = FALSE]
   ys <- yvec[rows]
@@ -42,13 +59,7 @@
   zs <- sweep(zs, 2, colMeans(zs))
   ys <- ys - mean(ys)
   normaliser <- colSums(zs * xs) / n
-  if (any(!is.finite(normaliser) | normaliser <= 0)) {
-    # Discarded sample: still consume its fold draw, so that the random number
-    # stream does not depend on which samples are discarded (and parallel runs,
-    # which pre-draw one fold assignment per sample, stay identical).
-    if (is.null(foldid) && identical(betainit, "cv lasso") && is.null(lambda)) {
-      sample(rep(seq(10), length = n))
-    }
+  if (any(!is.finite(normaliser) | abs(normaliser) <= sqrt(.Machine$double.eps))) {
     return(list(T = rep(NA_real_, ncol(xs)), refitted = FALSE))
   }
   zs <- sweep(zs, 2, normaliser, "/")
@@ -63,15 +74,16 @@
   list(T = as.vector((bs - truth) / ses), refitted = init$refitted)
 }
 
-# p x B matrix of studentized statistics over the bootstrap samples in `index`.
-# Folds are handled by .boot_map() (reproducible in parallel mode).
+# p x B matrix of studentized statistics over the bootstrap samples in `index`
+# (NA columns for discarded samples). Folds are handled by .boot_map().
 .xyz_cbootdist <- function(hats, index, yvec, truth, betainit, lambda, robust, parallel,
                            ncores) {
   draw_one <- function(b, foldid = NULL) {
     .xyz_draw(index[, b], hats, yvec, truth, betainit, lambda, robust, foldid)
   }
-  draws <- .boot_map(ncol(index), draw_one,
-                     draws_folds = identical(betainit, "cv lasso") && is.null(lambda),
-                     n = nrow(index), parallel = parallel, ncores = ncores)
+  fold_fun <- if (identical(betainit, "cv lasso") && is.null(lambda)) {
+    function(b) .xyz_foldid(index[, b])
+  }
+  draws <- .boot_map(ncol(index), draw_one, fold_fun, parallel = parallel, ncores = ncores)
   do.call(cbind, lapply(draws, `[[`, "T"))
 }

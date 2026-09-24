@@ -37,8 +37,9 @@
 #'   mean-centring, which leaves it in the model when the weights vary and
 #'   biases the estimates and the confidence intervals. SILM projects out the
 #'   intercept direction \eqn{\sqrt{w}} instead. Use `legacy = TRUE` to obtain
-#'   hdi's results. For both families a logical or two-level factor response
-#'   is accepted.
+#'   hdi's results. For `family = "binomial"` a logical or two-level factor
+#'   response is also accepted (with or without `legacy`); for `"gaussian"`, a
+#'   logical response is used as 0/1, as in hdi.
 #' * Arguments are checked before the computations start.
 #'
 #' Documented properties of hdi that are kept: a numeric `betainit` refers to
@@ -63,7 +64,9 @@
 #'   lambda.1se from 10-fold cross-validation), `"scaled lasso"`, or a numeric
 #'   vector of coefficients for the centred (and scaled) design, which requires
 #'   `sigma`.
-#' @param sigma Optional noise standard deviation, overriding the estimate.
+#' @param sigma Optional noise standard deviation, overriding the estimate
+#'   (not used with `robust = TRUE`, whose standard errors do not involve it,
+#'   nor for `family = "binomial"`).
 #' @param Z Optional matrix of nodewise residuals (e.g. from a previous call
 #'   with `return.Z = TRUE`) to skip the nodewise lasso. This also skips the
 #'   random draw of its cross-validation folds.
@@ -114,12 +117,18 @@ lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                        sigma = NULL, Z = NULL, verbose = FALSE, return.Z = FALSE,
                        suppress.grouptesting = FALSE, robust = FALSE, do.ZnZ = FALSE,
                        legacy = FALSE) {
-  args <- .check_proj_args(x, y, family, standardize, multiplecorr.method, betainit, sigma, Z,
-                           robust, legacy, parallel)
+  args <- .check_proj_args(x, y, family, standardize, multiplecorr.method, betainit, sigma, Z)
   x <- args$x
   y <- args$y
-  .check_count(N, "N")
-  if (!is.character(betainit)) sigma <- args$sigma
+  .check_integer(N, "N", "number of Monte Carlo samples")
+  flags <- .check_proj_flags(parallel = parallel, verbose = verbose, return.Z = return.Z,
+                             suppress.grouptesting = suppress.grouptesting, robust = robust,
+                             do.ZnZ = do.ZnZ, legacy = legacy)
+  for (nm in names(flags)) assign(nm, flags[[nm]])
+  if (family == "binomial" && !is.null(sigma)) {
+    warning("'sigma' is ignored for family = \"binomial\": the linearised model has unit ",
+            "variance.", call. = FALSE)
+  }
 
   n <- nrow(x)
   p <- ncol(x)

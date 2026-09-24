@@ -116,7 +116,7 @@ core_scenarios <- function(tier, modes = c("znz", "cv"), self_test = FALSE, st_l
       )
     }
   }
-  if (!self_test && st_legacy) out <- c(out, st_edge_scenarios(tier))
+  if (!self_test && st_legacy) out <- c(out, st_edge_scenarios(tier), compat_scenarios(tier))
   out
 }
 
@@ -154,4 +154,47 @@ st_edge_scenarios <- function(tier) {
     mk("E4-singleton", function() sim_linear(100, 200, "toeplitz", s0 = 3, beta = "U(1,2)"),
        list(list(label = "sub=30,test=150", sub.size = 30, test.set = 150L, M = 50)), seq_len(nseed))
   )
+}
+
+# Inputs that the first version of SILM 2.0.0's validation rejected although
+# SILM 1.0.0 processed them (code review): R subsetting semantics for `set`,
+# and logical designs/responses.
+compat_scenarios <- function(tier) {
+  set.seed(6001)
+  d10 <- sim_linear(100, 10, "toeplitz", s0 = 3)
+  set.seed(6002)
+  d51 <- sim_linear(100, 51, "toeplitz", s0 = 3)
+  set.seed(6003)
+  Xl <- matrix(runif(100 * 12) > 0.5, 100, 12)
+  dl <- list(X = Xl, Y = as.vector(Xl[, 1] - Xl[, 2] + rnorm(100)))
+  set.seed(6004)
+  Xl60 <- matrix(runif(100 * 60) > 0.5, 100, 60)
+  dl60 <- list(X = Xl60, Y = as.vector(Xl60[, 1] + rnorm(100)) > 0)
+  sets <- list(-(1:3), c(0, 1, 2), c(1.7, 2), c(2, 2, 3))
+  cases_ci <- list()
+  for (dn in c("p10", "p51")) for (st in sets) for (mode in c("znz", "cv")) {
+    cases_ci[[length(cases_ci) + 1L]] <- list(
+      data = if (dn == "p10") d10 else d51, seed = 1, rng = "default",
+      args = list(set = st, M = 50, alpha = 0.95,
+                  new_args = list(nodewise = if (mode == "znz") "ZnZ" else "cv")),
+      mode = mode, label = sprintf("%s,set=%s,%s", dn, paste(st, collapse = " "), mode))
+  }
+  by_mode <- function(cases, mode) Filter(function(cs) identical(cs$mode, mode), cases)
+  cases_sr <- list()
+  for (dd in list(list(d = dl, lab = "logicalX-p12"), list(d = dl60, lab = "logicalX+Y-p60")))
+    for (mode in c("znz", "cv")) {
+      cases_sr[[length(cases_sr) + 1L]] <- list(
+        data = dd$d, seed = 2, rng = "default", mode = mode,
+        args = list(new_args = list(nodewise = if (mode == "znz") "ZnZ" else "cv")),
+        label = paste(dd$lab, mode))
+    }
+  out <- list()
+  for (mode in c("znz", "cv")) {
+    out[[length(out) + 1L]] <- list(id = paste0("V-SimCI-set-", mode), legacy_mode = mode,
+      cases = by_mode(cases_ci, mode), old_fun = old_SimCI, new_fun = new_SimCI)
+    out[[length(out) + 1L]] <- list(id = paste0("V-SR-logical-", mode), legacy_mode = mode,
+      cases = by_mode(cases_sr, mode), old_fun = old_SR, new_fun = new_SR,
+      old_error_ok = TRUE, both_error_ok = TRUE)
+  }
+  out
 }

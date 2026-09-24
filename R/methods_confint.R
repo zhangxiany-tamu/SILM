@@ -72,24 +72,35 @@ confint.silm_proj <- function(object, parm, level = 0.95,
                               type = c("individual", "simultaneous"), group = NULL,
                               simult.stat = c("maxmin", "abs"), ...) {
   type <- match.arg(type)
+  stat_given <- !missing(simult.stat)
+  simult.stat <- match.arg(simult.stat)
   if (!is.numeric(level) || length(level) != 1L || !(level > 0 && level < 1)) {
     .stop("'level' must be a number between 0 and 1.")
   }
   pnames <- if (is.null(names(object$bhat))) seq_along(object$bhat) else names(object$bhat)
   if (type == "simultaneous") {
     return(.confint_simultaneous(object, if (missing(parm)) NULL else parm, level, group,
-                                 match.arg(simult.stat), pnames))
+                                 simult.stat, pnames))
+  }
+  if (!is.null(group) || stat_given) {
+    warning("'group' and 'simult.stat' are only used with type = \"simultaneous\".",
+            call. = FALSE)
   }
   parm <- if (missing(parm)) pnames else .resolve_parm(parm, pnames)
   .confint_individual(object, parm, level)
 }
 
+# Coefficients by name, or by index with R's subsetting semantics (as hdi's
+# confint.hdi: negative indices exclude, 0 is dropped).
 .resolve_parm <- function(parm, pnames) {
   if (is.numeric(parm)) {
-    if (any(parm < 1 | parm > length(pnames) | parm != floor(parm))) {
+    if (!length(parm) || anyNA(parm) || any(abs(parm) >= length(pnames) + 1) ||
+        (any(parm < 0) && any(parm > 0))) {
       .stop("'parm' must contain indices between 1 and ", length(pnames), ".")
     }
-    return(pnames[parm])
+    out <- pnames[parm]
+    if (!length(out)) .stop("'parm' selects no coefficient.")
+    return(out)
   }
   if (is.character(parm) && all(parm %in% pnames)) return(parm)
   .stop("'parm' must be coefficient indices or names.")
@@ -118,7 +129,7 @@ confint.silm_proj <- function(object, parm, level = 0.95,
 
 # Number of bootstrap samples behind the centred distribution.
 .boot_B <- function(object) {
-  if (!is.null(object$B.eff)) object$B.eff[["centred"]] else object$B
+  if (!is.null(object$B.eff)) object$B.eff else object$B
 }
 
 .confint_simultaneous <- function(object, parm, level, group, stat, pnames) {
@@ -127,14 +138,17 @@ confint.silm_proj <- function(object, parm, level = 0.95,
   }
   p <- length(object$bhat)
   pn <- names(object$bhat)
+  # Rows in the order of `parm` (as for individual intervals); the group
+  # defaults to the coefficients in `parm`.
+  idx <- if (is.null(parm)) NULL else match(.resolve_parm(parm, pnames), pnames)
   G <- if (!is.null(group)) {
     .resolve_group(group, p, pn, "group")
-  } else if (!is.null(parm)) {
-    .resolve_group(parm, p, pn, "parm")
+  } else if (!is.null(idx)) {
+    sort(unique(idx))
   } else {
     seq_len(p)
   }
-  idx <- if (is.null(parm)) G else .resolve_group(parm, p, pn, "parm")
+  if (is.null(idx)) idx <- G
   if (!all(idx %in% G)) .stop("'parm' must be contained in 'group'.")
   .warn_simultaneous(object)
 

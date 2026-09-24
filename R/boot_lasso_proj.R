@@ -61,7 +61,10 @@
 #'   resamples rows of the design, the response and the nodewise residuals
 #'   after a correction that makes the bootstrap errors orthogonal to them.
 #'   It is defined with `robust = TRUE`; the paper reports that it is less
-#'   competitive than the Gaussian wild bootstrap.
+#'   competitive than the Gaussian wild bootstrap. When the lasso is re-tuned
+#'   by cross-validation, the folds are formed by original observation, since
+#'   resampled rows are duplicated. Bootstrap samples with a degenerate
+#'   normaliser \eqn{Z^{*\top}_j X^*_j/n}{Z*_j'X*_j/n} are discarded (`B.eff`).
 #' * Simultaneous confidence intervals (eq. 10) via
 #'   `confint(fit, type = "simultaneous")` and group tests via [groupTest()].
 #'
@@ -100,15 +103,20 @@
 #'   `pval.corr`, `sigmahat`, `standardize`, `sds`, `bhat`, `se`, `betahat`,
 #'   `family`, `method` (`"boot.lasso.proj"`), `B`, `boot.shortcut`, `lambda`,
 #'   `call`, `Z` (if `return.Z = TRUE`), `cboot.dist` and
-#'   `cboot.dist.underH0c` (if `return.bootdist = TRUE`: the bootstrap
-#'   distributions of the estimator on the scale of `bhat`, centred and under
-#'   the complete null hypothesis), followed by the SILM additions
-#'   `boot.type`, `multiplier`, `robust`, `gaussian.stub`, `B.eff` (number of
-#'   usable bootstrap samples), `tstat` (the studentized statistics),
-#'   `boot.summary` (per bootstrap sample, the maximum, minimum and maximal
-#'   absolute value of the studentized bootstrap statistics, and the maximal
-#'   absolute value under the complete null hypothesis), `group.summary` and
-#'   `boot.index`.
+#'   `cboot.dist.underH0c` (if `return.bootdist = TRUE`: p x B matrices of
+#'   \eqn{\hat{s.e.}_j T^*_j}{se_j T*_j}, where
+#'   \eqn{T^*_j = (\hat b^*_j - \hat\beta_j)/\hat{s.e.}^*_j}{T*_j = (b*_j - betahat_j)/se*_j}
+#'   is the studentized centred bootstrap statistic, and the same under the
+#'   complete null hypothesis, on the scale of `bhat`, as in hdi), followed by
+#'   the SILM additions `boot.type`, `multiplier`, `robust`, `gaussian.stub`,
+#'   `B.eff` (number of bootstrap samples used; smaller than `B` only when
+#'   xyz-paired samples had to be discarded), `tstat` (the studentized
+#'   statistics \eqn{\hat b_j/\hat{s.e.}_j}{b_j / se_j}), `boot.summary` (per
+#'   bootstrap sample, the maximum, minimum and maximal absolute value of the
+#'   \eqn{T^*_j}{T*_j}, and the maximal absolute value under the complete null
+#'   hypothesis), `group.summary` (the same per group in `groups`) and
+#'   `boot.index` (xyz-paired bootstrap with `return.bootdist = TRUE`: the
+#'   resampled rows, one column per column of `cboot.dist`).
 #' @references Dezeure, R., Bühlmann, P. and Zhang, C.-H. (2017).
 #'   High-dimensional simultaneous inference with the bootstrap. \emph{TEST},
 #'   26, 685-719.
@@ -134,22 +142,33 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                             boot.type = if (wild) "wild" else "residual",
                             multiplier = c("gaussian", "mammen"),
                             boot.H0c = identical(multiplecorr.method, "WY"), groups = NULL) {
+  # (missing() is unreliable once an argument has been modified.)
+  given <- c(wild = !missing(wild), boot.type = !missing(boot.type),
+             multiplier = !missing(multiplier))
+  flags <- .check_proj_flags(parallel = parallel, verbose = verbose, return.Z = return.Z,
+                             robust = robust, boot.shortcut = boot.shortcut,
+                             return.bootdist = return.bootdist, wild = wild,
+                             gaussian.stub = gaussian.stub)
+  for (nm in names(flags)) assign(nm, flags[[nm]])
   args <- .check_proj_args(x, y, family, standardize, multiplecorr.method, betainit, sigma, Z,
-                           robust, legacy = FALSE, parallel = parallel, boot = TRUE)
+                           boot = TRUE, stub = gaussian.stub)
   x <- args$x
   y <- args$y
-  B <- .check_boot_B(B)
-  for (flag in c("boot.shortcut", "return.bootdist", "wild", "gaussian.stub", "return.Z")) {
-    .check_flag(get(flag), flag)
-  }
-  extras <- .boot_check_extras(boot.type, wild, missing(wild), missing(boot.type), multiplier,
-                               missing(multiplier), boot.H0c, multiplecorr.method, groups,
-                               gaussian.stub, robust, ncol(x), colnames(x))
+  B <- .check_integer(B, "B", "number of bootstrap samples", min = 2)
+  extras <- .boot_check_extras(boot.type, wild, !given[["wild"]], !given[["boot.type"]], multiplier,
+                               !given[["multiplier"]], .check_flag01(boot.H0c, "boot.H0c"),
+                               multiplecorr.method, groups, gaussian.stub, robust, ncol(x),
+                               colnames(x))
   boot.type <- extras$boot.type
   wild <- extras$wild
   if (!is.null(sigma)) {
-    warning("A user-supplied 'sigma' is used for the standard errors of the original fit ",
-            "only; the bootstrap fits estimate the noise level (as in hdi).", call. = FALSE)
+    if (robust) {
+      warning("A user-supplied 'sigma' has no effect on the robust standard errors; it is ",
+              "only reported as 'sigmahat'.", call. = FALSE)
+    } else {
+      warning("A user-supplied 'sigma' is used for the standard errors of the original fit ",
+              "only; the bootstrap fits estimate the noise level (as in hdi).", call. = FALSE)
+    }
   }
   if (boot.shortcut && identical(betainit, "scaled lasso")) {
     warning("'boot.shortcut' has no effect with betainit = \"scaled lasso\".", call. = FALSE)
@@ -199,12 +218,9 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
     ystar <- as.vector(x %*% betalasso) + rstar
     cboot.dist <- compute(ystar, boot.truth = betalasso)
   }
-  if (boot.type == "xyz") cboot.dist <- .drop_invalid_draws(cboot.dist)
-  B.eff <- ncol(cboot.dist)
-  pval <- .boot_pvalues(bproj, se, cboot.dist, B.eff)
 
   # Bootstrap under the complete null hypothesis (for Westfall-Young and group
-  # p-values), reusing the resampled errors, then the multiple testing adjustment.
+  # p-values), reusing the resampled errors (or rows).
   cboot.dist.underH0c <- NULL
   if (extras$boot.H0c) {
     cboot.dist.underH0c <- if (gaussian.stub) {
@@ -214,10 +230,19 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
     } else {
       compute(0 + rstar, 0)
     }
-    if (boot.type == "xyz") cboot.dist.underH0c <- .drop_invalid_draws(cboot.dist.underH0c)
   }
+  if (boot.type == "xyz") {
+    kept <- .xyz_kept(cboot.dist, cboot.dist.underH0c)
+    cboot.dist <- cboot.dist[, kept, drop = FALSE]
+    if (!is.null(cboot.dist.underH0c)) cboot.dist.underH0c <- cboot.dist.underH0c[, kept, drop = FALSE]
+    index <- index[, kept, drop = FALSE]
+  }
+  B.eff <- ncol(cboot.dist)
+
+  # Individual p-values and the multiple testing adjustment.
+  pval <- .boot_pvalues(bproj, se, cboot.dist, B.eff)
   pcorr <- if (multiplecorr.method == "WY") {
-    .boot_wy(bproj, se, cboot.dist.underH0c, ncol(cboot.dist.underH0c))
+    .boot_wy(bproj, se, cboot.dist.underH0c, B.eff)
   } else {
     .boot_padjust(pval, multiplecorr.method, B.eff, ncol(x))
   }
@@ -241,7 +266,7 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
   out <- c(out, list(
     boot.type = boot.type, multiplier = extras$multiplier, robust = robust,
     gaussian.stub = gaussian.stub,
-    B.eff = c(centred = B.eff, H0c = if (is.null(cboot.dist.underH0c)) NA else ncol(cboot.dist.underH0c)),
+    B.eff = B.eff,
     tstat = tstat,
     boot.summary = .boot_summary(cboot.dist, cboot.dist.underH0c),
     group.summary = .boot_group_summary(extras$groups, cboot.dist, cboot.dist.underH0c),
@@ -251,22 +276,17 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
   out
 }
 
-.check_boot_B <- function(B) {
-  if (!is.numeric(B) || length(B) != 1L || !is.finite(B) || B < 2 || B != floor(B)) {
-    .stop("'B' must be an integer >= 2.")
+# xyz-paired bootstrap: samples that could not be computed (non-finite or
+# zero normaliser Z*'X*/n) in either pass are discarded, with one warning.
+.xyz_kept <- function(dist, dist0 = NULL) {
+  ok <- colSums(!is.finite(dist)) == 0
+  if (!is.null(dist0)) ok <- ok & colSums(!is.finite(dist0)) == 0
+  if (!all(ok)) {
+    warning(sum(!ok), " of ", length(ok), " xyz bootstrap samples were discarded (degenerate ",
+            "normaliser Z*'X*/n); see 'B.eff'.", call. = FALSE)
   }
-  B
-}
-
-# Remove bootstrap samples that could not be computed (xyz-paired bootstrap
-# with a non-positive normaliser), with a warning.
-.drop_invalid_draws <- function(dist) {
-  bad <- colSums(is.na(dist)) > 0
-  if (!any(bad)) return(dist)
-  warning(sum(bad), " of ", ncol(dist), " bootstrap samples were discarded (non-positive ",
-          "normaliser Z*'X*/n); see 'B.eff'.", call. = FALSE)
-  if (sum(!bad) < 2) .stop("Fewer than 2 usable bootstrap samples.")
-  dist[, !bad, drop = FALSE]
+  if (sum(ok) < 2) .stop("Fewer than 2 usable bootstrap samples.")
+  ok
 }
 
 # Summaries per group of coefficients (for simultaneous inference over groups

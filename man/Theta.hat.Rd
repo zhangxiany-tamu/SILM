@@ -22,9 +22,9 @@ error pooled over all nodewise regressions, as described in Zhang and
 Cheng (2017, Section 5); \code{"ZnZ"} refines that lambda with the rule of
 Zhang and Zhang (2014). See the section "Nodewise tuning" below.}
 
-\item{center}{Logical. If \code{TRUE}, the columns of \code{X} and \code{Y} are centred
-before the analysis. The default \code{FALSE} uses the data as given (as SILM
-1.0.0 did) and warns when they do not appear to be centred.}
+\item{center}{Logical. If \code{TRUE}, the columns of \code{X} are centred before
+\eqn{\Theta} is estimated (use the same value as in the calls that use
+the result). No check for centring is made.}
 
 \item{parallel, ncores}{Compute the nodewise regressions in parallel on
 \code{ncores} cores (forking; not on Windows). This does not change the
@@ -32,8 +32,8 @@ results.}
 }
 \value{
 A p x p matrix with attributes \code{method} (\code{"inverse-gram"} or
-\code{"nodewise"}) and, for the nodewise lasso, \code{lambda} (the tuning parameter
-used).
+\code{"nodewise"}), \code{center}, and, for the nodewise lasso, \code{lambda} (the tuning
+parameter used).
 }
 \description{
 Returns the matrix \eqn{\hat\Theta} that \code{\link[=SR]{SR()}}, \code{\link[=Sim.CI]{Sim.CI()}} and \code{\link[=Step]{Step()}}
@@ -49,6 +49,19 @@ generator. Supplying \code{Theta} therefore skips that draw, so the bootstrap
 draws of a subsequent call differ from those of a call that computes
 \eqn{\hat\Theta} itself under the same seed.
 }
+\section{Nodewise tuning}{
+
+SILM 1.0.0 obtained \eqn{\Theta} from an internal function of the 'hdi'
+package. With hdi 0.1-6, current when SILM 1.0.0 was released (January
+2019), the tuning parameter was the cross-validated lambda (\code{"cv"}). hdi
+0.1-7 (March 2019) changed the default of that internal function to the
+Z&Z rule, so from then until SILM was archived (July 2026) SILM computed
+\code{nodewise = "ZnZ"} without saying so. SILM now follows the paper by
+default; use \code{nodewise = "ZnZ"} to reproduce results obtained with SILM
+1.0.0 and hdi 0.1-7 to 0.1-10. Both settings reproduce the respective
+archived versions exactly (same numbers under the same random seed).
+}
+
 \examples{
 set.seed(1)
 X <- matrix(rnorm(40 * 60), 40, 60)

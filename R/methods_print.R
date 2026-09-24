@@ -14,7 +14,8 @@ print.silm_proj <- function(x, n = 10L, ...) {
   if (boot) {
     boot_desc <- x$boot.type
     if (identical(x$boot.type, "wild")) boot_desc <- paste0(boot_desc, " (", x$multiplier, " multipliers)")
-    settings <- c(settings, sprintf("%s bootstrap, B = %d", boot_desc, x$B))
+    B_desc <- if (!is.null(x$B.eff) && x$B.eff < x$B) sprintf("%d (%d usable)", x$B, x$B.eff) else x$B
+    settings <- c(settings, sprintf("%s bootstrap, B = %s", boot_desc, B_desc))
   }
   cat(paste(settings, collapse = "; "), "\n")
   cat("Estimated noise level (sigmahat):", format(x$sigmahat, digits = 4), "\n")

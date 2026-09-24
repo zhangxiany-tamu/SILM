@@ -3,29 +3,31 @@
 # results for valid inputs are unchanged.
 
 .check_proj_args <- function(x, y, family, standardize, multiplecorr.method, betainit, sigma,
-                             Z, robust, legacy, parallel, boot = FALSE) {
-  x <- .check_X(x, "x")
-  n <- nrow(x)
-  p <- ncol(x)
+                             Z, boot = FALSE, stub = FALSE) {
+  if (boot && !identical(family, "gaussian")) {
+    .stop("The function boot.lasso.proj is currently not supporting families other than 'gaussian'")
+  }
   if (!is.character(family) || length(family) != 1L || !family %in% c("gaussian", "binomial")) {
     .stop("'family' must be \"gaussian\" or \"binomial\".")
   }
-  if (boot && family != "gaussian") {
-    .stop("The function boot.lasso.proj is currently not supporting families other than 'gaussian'")
-  }
+  x <- .check_X(x, "x")
+  n <- nrow(x)
+  p <- ncol(x)
   if (family == "binomial") {
     if (length(y) != n) .stop("'y' must have ", n, " elements (one per row of x).")
     y <- .binomial_response(y)
   } else {
     y <- .check_Y(y, n, "y")
   }
-  for (flag in c("standardize", "robust", "legacy", "parallel")) {
-    .check_flag(get(flag), flag)
-  }
+  .check_flag(standardize, "standardize")
   .multiplecorr_check(multiplecorr.method)
 
   if (is.null(Z)) {
     if (p < 3L) .stop("'x' must have at least 3 columns for the nodewise lasso (or supply 'Z').")
+    if (n < 10L) {
+      .stop("The nodewise lasso needs at least 10 observations (it uses 10-fold ",
+            "cross-validation), or supply 'Z'.")
+    }
   } else if (!is.matrix(Z) || !is.numeric(Z) || !all(dim(Z) == dim(x)) || anyNA(Z)) {
     .stop("'Z' must be a numeric matrix of the same dimension as 'x'.")
   }
@@ -39,7 +41,7 @@
     if (length(betainit) != p || anyNA(betainit)) {
       .stop("A numeric 'betainit' must be a vector of length ncol(x) = ", p, ".")
     }
-    if (boot) {
+    if (boot && !stub) {
       .stop("We need to somehow specify the initial lasso method for the bootstrap! ",
             "Use betainit = \"cv lasso\" or \"scaled lasso\".")
     }
@@ -60,4 +62,18 @@
     .stop("'sigma' must be a single positive number.")
   }
   list(x = x, y = y, sigma = sigma)
+}
+
+# 0/1 or logical flags of lasso.proj()/boot.lasso.proj(), checked under their
+# user-facing names; returns the flags as logicals.
+.check_proj_flags <- function(...) {
+  flags <- list(...)
+  lapply(stats::setNames(names(flags), names(flags)), function(nm) .check_flag01(flags[[nm]], nm))
+}
+
+.check_integer <- function(x, arg, what, min = 1) {
+  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x < min || x != floor(x)) {
+    .stop("'", arg, "' must be an integer >= ", min, " (", what, ").")
+  }
+  x
 }

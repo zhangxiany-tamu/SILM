@@ -42,7 +42,8 @@ Step <- function(X, Y, M = 500, alpha = 0.05, nodewise = c("cv", "ZnZ"), center 
   .check_count(M)
   .check_level(alpha)
   X <- data$X
-  fit <- .silm_fit(X, data$Y, nodewise, Theta, .check_flag(parallel, "parallel"), ncores)
+  fit <- .silm_fit(X, data$Y, nodewise, Theta, .check_flag(parallel, "parallel"), ncores,
+                   center = center)
   n <- fit$n
   p <- fit$p
   count.st <- count.nst <- rep(1,p)

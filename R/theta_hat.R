@@ -13,9 +13,13 @@
 #' \eqn{\hat\Theta} itself under the same seed.
 #'
 #' @inheritParams SR
+#' @param center Logical. If `TRUE`, the columns of `X` are centred before
+#'   \eqn{\Theta} is estimated (use the same value as in the calls that use
+#'   the result). No check for centring is made.
 #' @return A p x p matrix with attributes `method` (`"inverse-gram"` or
-#'   `"nodewise"`) and, for the nodewise lasso, `lambda` (the tuning parameter
-#'   used).
+#'   `"nodewise"`), `center`, and, for the nodewise lasso, `lambda` (the tuning
+#'   parameter used).
+#' @inheritSection SR Nodewise tuning
 #' @inherit SR references
 #' @examples
 #' set.seed(1)
@@ -31,6 +35,8 @@ Theta.hat <- function(X, nodewise = c("cv", "ZnZ"), center = FALSE, parallel = F
   X <- .check_X(X)
   if (.check_flag(center, "center")) X <- X - rep(colMeans(X), each = nrow(X))
   n <- dim(X)[1]
-  .silm_theta(X, t(X)%*%X/n, nodewise, parallel = .check_flag(parallel, "parallel"),
-              ncores = ncores)
+  Theta <- .silm_theta(X, t(X)%*%X/n, nodewise, parallel = .check_flag(parallel, "parallel"),
+                       ncores = ncores)
+  attr(Theta, "center") <- center
+  Theta
 }

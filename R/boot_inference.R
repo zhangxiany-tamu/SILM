@@ -40,7 +40,7 @@
                   "Reasonable accuracy is only attained starting from (4+1)/(B+1)=",
                   signif((4 + 1) / (B + 1), 3), ".\n",
                   "This issue is easily solved by using 'WY' as multiple testing method.",
-                  sep = ""))
+                  sep = ""), call. = FALSE)
   }
   p.adjust(pval, method = method)
 }

@@ -76,7 +76,8 @@ SR <- function(X, Y, nodewise = c("cv", "ZnZ"), center = FALSE, Theta = NULL,
                parallel = FALSE, ncores = getOption("mc.cores", 2L)) {
   nodewise <- match.arg(nodewise)
   data <- .prepare_xy(X, Y, center)
-  fit <- .silm_fit(data$X, data$Y, nodewise, Theta, .check_flag(parallel, "parallel"), ncores)
+  fit <- .silm_fit(data$X, data$Y, nodewise, Theta, .check_flag(parallel, "parallel"), ncores,
+                   center = center)
   n <- fit$n
   p <- fit$p
 

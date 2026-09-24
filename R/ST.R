@@ -21,7 +21,8 @@
 #'   of observations (`floor(sub.size)` is used), or a proportion of n if
 #'   smaller than 1. Zhang and Cheng (2017) use n/5 to n/3.
 #' @param test.set The group of variables to be tested: column indices, or a
-#'   logical vector of length p.
+#'   logical vector of length p. Entries that are not column indices are
+#'   ignored with a warning (SILM 1.0.0 ignored them silently).
 #' @param M The number of bootstrap replications (default 500).
 #' @param alpha The significance level (default 0.05).
 #' @param nodewise Tuning rule for the nodewise lasso that estimates
@@ -73,8 +74,8 @@ ST <- function(X.f, Y.f, sub.size, test.set, M = 500, alpha = 0.05,
   Y.f <- .check_Y(Y.f, nrow(X.f), "Y.f")
   n <- dim(X.f)[1]
   p <- dim(X.f)[2]
-  if (p < 2L) .stop("'X.f' must have at least 2 columns.")
-  test.set <- .check_index_set(test.set, p, "test.set", ignore_out_of_range = TRUE)
+  if (p < 3L) .stop("'X.f' must have at least 3 columns (ST uses the nodewise lasso).")
+  test.set <- .check_test_set(test.set, p)
   .check_count(M)
   .check_level(alpha)
   center <- .check_flag(center, "center")

@@ -11,7 +11,6 @@
   if (boot.type != "wild" && !multiplier_missing && multiplier != "gaussian") {
     .stop("'multiplier' only applies to the wild bootstrap (boot.type = \"wild\").")
   }
-  .check_flag(boot.H0c, "boot.H0c")
   if (multiplecorr.method == "WY" && !boot.H0c) {
     .stop("multiplecorr.method = \"WY\" needs the bootstrap under the complete null ",
           "hypothesis (boot.H0c = TRUE).")
