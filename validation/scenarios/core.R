@@ -112,9 +112,46 @@ core_scenarios <- function(tier, modes = c("znz", "cv"), self_test = FALSE, st_l
         id = sprintf("B-%s-%s", fn, mode), legacy_mode = mode,
         cases = with_new_args(base_cases, new_args),
         old_fun = specs[[fn]]$old, new_fun = specs[[fn]]$new,
-        both_error_ok = TRUE
+        both_error_ok = TRUE, old_error_ok = fn == "ST" && !self_test
       )
     }
   }
+  if (!self_test && st_legacy) out <- c(out, st_edge_scenarios(tier))
   out
+}
+
+# ST edge cells (legacy = TRUE on the new side, so values must match exactly
+# wherever SILM 1.0.0 did not error).
+#   E1 global null, 100 x 200, sub.size 30: the pilot lasso often selects no
+#      variable (SILM 1.0.0 errors: "x should be a matrix with 2 or more columns").
+#   E2 100 x 500, s0 = 30, beta U(1,2), sub.size 70: |set1| > |D2| - 1 (both error).
+#   E3 the Rd example over many seeds (hits |set1| = p - 1, the `drop` bug).
+#   E4 test.set = {j} for a pure-noise j that is usually screened out (-Inf).
+st_edge_scenarios <- function(tier) {
+  nseed <- if (tier == "full") 40 else 12
+  mk <- function(id, data_fun, calls, seeds) {
+    cases <- list()
+    for (k in seq_along(seeds)) {
+      set.seed(5000L + k + nchar(id))
+      d <- data_fun()
+      for (cl in calls) {
+        cases[[length(cases) + 1L]] <- list(data = d, args = c(cl, list(new_args = list(
+          nodewise = "ZnZ", legacy = TRUE))), seed = seeds[k], rng = "default",
+          label = paste0(id, ",", cl$label, ",seed=", seeds[k]))
+      }
+    }
+    list(id = paste0("E-ST-", id), legacy_mode = "znz", cases = cases, old_fun = old_ST,
+         new_fun = new_ST, old_error_ok = TRUE, both_error_ok = TRUE)
+  }
+  list(
+    mk("E1-null", function() sim_linear(100, 200, "iid", s0 = 0, error = "gauss"),
+       list(list(label = "sub=30", sub.size = 30, test.set = 1:200, M = 50)), seq_len(nseed)),
+    mk("E2-oversize", function() sim_linear(100, 500, "toeplitz", s0 = 30, beta = "U(1,2)"),
+       list(list(label = "sub=70", sub.size = 70, test.set = 31:500, M = 50)), seq_len(max(4, nseed / 3))),
+    mk("E3-rd-example", function() sim_linear(100, 10, "toeplitz", s0 = 3, beta = "U(0,2)"),
+       list(list(label = "sub=30,test=4..10", sub.size = 30, test.set = 4:10, M = 50)),
+       seq_len(nseed * 3)),
+    mk("E4-singleton", function() sim_linear(100, 200, "toeplitz", s0 = 3, beta = "U(1,2)"),
+       list(list(label = "sub=30,test=150", sub.size = 30, test.set = 150L, M = 50)), seq_len(nseed))
+  )
 }
