@@ -123,9 +123,10 @@ lasso_proj_binomial_configs <- function() {
 }
 
 boot_configs <- function(B) {
-  D <- function(label, call = list(), ci = FALSE, Z_from = NULL, levels = NULL, rng = "default") {
+  D <- function(label, call = list(), ci = FALSE, Z_from = NULL, levels = NULL, rng = "default",
+                new_args = NULL, allow_seed_diff = FALSE) {
     list(label = label, call = utils::modifyList(list(B = B), call), ci = ci, Z_from = Z_from,
-         levels = levels, rng = rng)
+         levels = levels, rng = rng, new_args = new_args, allow_seed_diff = allow_seed_diff)
   }
   list(
     D("default"),
@@ -148,7 +149,15 @@ boot_configs <- function(B) {
     D("parallel-2", list(parallel = TRUE, ncores = 2)),
     D("parallel-4-wild", list(parallel = TRUE, ncores = 4, wild = TRUE)),
     D("parallel-2-shortcut", list(parallel = TRUE, ncores = 2, boot.shortcut = TRUE)),
-    D("rng-3.5.0", list(), rng = "3.5.0")
+    D("rng-3.5.0", list(), rng = "3.5.0"),
+    # SILM arguments passed explicitly at their defaults: must be identical.
+    D("new-args-at-defaults", new_args = list(boot.type = "residual", multiplier = "gaussian",
+                                              boot.H0c = TRUE, groups = list(1:3))),
+    D("wild-via-boot.type", list(wild = TRUE), new_args = list(boot.type = "wild")),
+    # Extra H0c pass with a p.adjust method: identical p-values, the RNG state
+    # differs by the extra pass (enumerated ALLOWED difference).
+    D("holm-with-H0c", list(multiplecorr.method = "holm"), new_args = list(boot.H0c = TRUE),
+      allow_seed_diff = TRUE)
   )
 }
 
@@ -178,6 +187,9 @@ hdi_scenarios <- function(tier) {
          old_fun = old_proj, new_fun = new_proj),
     list(id = "D-boot.lasso.proj", legacy_mode = "znz",
          cases = make_proj_cases(bt_data, boot_configs(B), "boot.lasso.proj", seeds[1]),
-         old_fun = old_proj, new_fun = new_proj)
+         old_fun = old_proj, new_fun = new_proj,
+         allowed = function(old, new, case) {
+           isTRUE(case$args$allow_seed_diff) && identical(old$value, new$value)
+         })
   )
 }

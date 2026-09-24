@@ -4,36 +4,93 @@
 \alias{confint.silm_proj}
 \title{Confidence intervals from the de-sparsified lasso}
 \usage{
-\method{confint}{silm_proj}(object, parm, level = 0.95, ...)
+\method{confint}{silm_proj}(
+  object,
+  parm,
+  level = 0.95,
+  type = c("individual", "simultaneous"),
+  group = NULL,
+  simult.stat = c("maxmin", "abs"),
+  ...
+)
 }
 \arguments{
 \item{object}{A result of \code{\link[=lasso.proj]{lasso.proj()}} or \code{\link[=boot.lasso.proj]{boot.lasso.proj()}}.}
 
-\item{parm}{Coefficients (indices or names); all by default.}
+\item{parm}{Coefficients (indices or names) for which intervals are
+returned; by default all coefficients (or all of \code{group}).}
 
-\item{level}{Confidence level.}
+\item{level}{Confidence level (joint level for simultaneous intervals).}
+
+\item{type}{\code{"individual"} (default) or \code{"simultaneous"}.}
+
+\item{group}{For simultaneous intervals: the group \eqn{G} of coefficients
+covered jointly (indices, names or a logical vector); must contain
+\code{parm}. Defaults to \code{parm}.}
+
+\item{simult.stat}{\code{"maxmin"} (default; eq. 10) or \code{"abs"}.}
 
 \item{...}{Not used.}
 }
 \value{
 A matrix with columns \code{lower} and \code{upper} and one row per
-coefficient.
+coefficient. Simultaneous intervals carry an attribute \code{"simultaneous"}
+with the group, the statistic, the level and the bootstrap quantiles.
 }
 \description{
-Individual confidence intervals for the coefficients, from the asymptotic
-Gaussian distribution (\code{\link[=lasso.proj]{lasso.proj()}}) or from the bootstrap distribution
-(\code{\link[=boot.lasso.proj]{boot.lasso.proj()}}, which requires \code{return.bootdist = TRUE}). The
-individual intervals are identical to those of the archived 'hdi' package.
+Individual or simultaneous confidence intervals for the coefficients.
 }
 \details{
-For \code{\link[=boot.lasso.proj]{boot.lasso.proj()}}, the interval for \eqn{\beta_j} is
+\strong{Individual intervals} (\code{type = "individual"}) come from the asymptotic
+Gaussian distribution for \code{\link[=lasso.proj]{lasso.proj()}} and from the bootstrap
+distribution for \code{\link[=boot.lasso.proj]{boot.lasso.proj()}} (which requires \code{return.bootdist = TRUE}); they are identical to those of the archived 'hdi' package. For the
+bootstrap, the interval for \eqn{\beta_j} is
 \eqn{[\hat b_j - q^*_{j;1-\alpha/2}, \hat b_j - q^*_{j;\alpha/2}]}{[b_j - q*_j(1 - a/2), b_j - q*_j(a/2)]},
 where \eqn{q^*_{j;\nu}}{q*_j(nu)} are quantiles of the bootstrap distribution
 of \eqn{\hat{s.e.}_j T^*_j}{se_j T*_j} (Dezeure, Bühlmann and Zhang, 2017,
 eq. 9). As in hdi, quantile type 1 is used when \eqn{B (1 - level) / 2} is
 an integer and type 7 otherwise; because of floating-point rounding this
 test fails for common levels such as 0.95, so type 7 is used in practice.
+
+\strong{Simultaneous intervals} (\code{type = "simultaneous"}, \code{\link[=boot.lasso.proj]{boot.lasso.proj()}}
+only; not available in hdi) cover all \eqn{\beta_j}, \eqn{j \in G},
+jointly with probability approximately \code{level} (Dezeure, Bühlmann and Zhang,
+2017, Section 3.2, eq. 10):
+\itemize{
+\item \code{simult.stat = "maxmin"}:
+\eqn{[\hat b_j - \hat{s.e.}_j q^*_{\max;G}(1-\alpha/2), \hat b_j - \hat{s.e.}_j q^*_{\min;G}(\alpha/2)]}{[b_j - se_j qmax_G(1 - a/2), b_j - se_j qmin_G(a/2)]},
+where \eqn{q^*_{\max;G}}{qmax_G} and \eqn{q^*_{\min;G}}{qmin_G} are quantiles
+of the bootstrap distributions of \eqn{\max_{j \in G} T^*_j} and
+\eqn{\min_{j \in G} T^*_j};
+\item \code{simult.stat = "abs"}: \eqn{\hat b_j \mp \hat{s.e.}_j q^*_{abs;G}(1-\alpha)}{b_j -/+ se_j qabs_G(1 - a)},
+with the quantile of \eqn{\max_{j \in G} |T^*_j|}.
+}
+
+Here \eqn{T^*_j = (\hat b^*_j - \hat\beta_j) / \hat{s.e.}^*_j} is the
+studentized centred bootstrap statistic (the factor \eqn{\sqrt{n}} in the
+display of the region \eqn{C(1-\alpha)} on p. 693 of the paper is a typo).
+The quantile type follows the rule above. The group \code{G} defaults to \code{parm}
+(all coefficients if both are missing); intervals over all coefficients, or
+over a group given in \code{groups} when fitting, are available without
+\code{return.bootdist = TRUE}. The residual bootstrap is valid for simultaneous
+inference only under homoscedastic errors; use the wild (or xyz-paired)
+bootstrap otherwise (the paper's Theorems 1 and 3).
+}
+\examples{
+set.seed(1)
+x <- matrix(rnorm(50 * 15), 50, 15)
+y <- x[, 1] + rnorm(50)
+fit <- boot.lasso.proj(x, y, B = 50, boot.shortcut = TRUE, wild = TRUE,
+                       robust = TRUE, return.bootdist = TRUE)
+confint(fit, parm = 1:3)                           # individual
+confint(fit, type = "simultaneous")[1:3, ]         # all 15 jointly
+confint(fit, type = "simultaneous", group = 1:5)   # the first 5 jointly
+}
+\references{
+Dezeure, R., Bühlmann, P. and Zhang, C.-H. (2017).
+High-dimensional simultaneous inference with the bootstrap. \emph{TEST},
+26, 685-719.
 }
 \seealso{
-\code{\link[=lasso.proj]{lasso.proj()}}, \code{\link[=boot.lasso.proj]{boot.lasso.proj()}}
+\code{\link[=lasso.proj]{lasso.proj()}}, \code{\link[=boot.lasso.proj]{boot.lasso.proj()}}, \code{\link[=groupTest]{groupTest()}}
 }

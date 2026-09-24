@@ -30,3 +30,11 @@
   }
   invisible(NULL)
 }
+
+.message_once <- function(key, ...) {
+  if (is.null(.silm_env[[key]])) {
+    .silm_env[[key]] <- TRUE
+    message(...)
+  }
+  invisible(NULL)
+}

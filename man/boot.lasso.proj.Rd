@@ -22,7 +22,11 @@ boot.lasso.proj(
   boot.shortcut = FALSE,
   return.bootdist = FALSE,
   wild = FALSE,
-  gaussian.stub = FALSE
+  gaussian.stub = FALSE,
+  boot.type = if (wild) "wild" else "residual",
+  multiplier = c("gaussian", "mammen"),
+  boot.H0c = identical(multiplecorr.method, "WY"),
+  groups = NULL
 )
 }
 \arguments{

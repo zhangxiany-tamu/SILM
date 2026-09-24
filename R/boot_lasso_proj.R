@@ -102,7 +102,10 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                             ncores = getOption("mc.cores", 2L), betainit = "cv lasso",
                             sigma = NULL, Z = NULL, verbose = FALSE, return.Z = FALSE,
                             robust = FALSE, B = 1000, boot.shortcut = FALSE,
-                            return.bootdist = FALSE, wild = FALSE, gaussian.stub = FALSE) {
+                            return.bootdist = FALSE, wild = FALSE, gaussian.stub = FALSE,
+                            boot.type = if (wild) "wild" else "residual",
+                            multiplier = c("gaussian", "mammen"),
+                            boot.H0c = identical(multiplecorr.method, "WY"), groups = NULL) {
   args <- .check_proj_args(x, y, family, standardize, multiplecorr.method, betainit, sigma, Z,
                            robust, legacy = FALSE, parallel = parallel, boot = TRUE)
   x <- args$x
@@ -111,6 +114,11 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
   for (flag in c("boot.shortcut", "return.bootdist", "wild", "gaussian.stub", "return.Z")) {
     .check_flag(get(flag), flag)
   }
+  extras <- .boot_check_extras(boot.type, wild, missing(wild), missing(boot.type), multiplier,
+                               missing(multiplier), boot.H0c, multiplecorr.method, groups,
+                               gaussian.stub, robust, ncol(x), colnames(x))
+  boot.type <- extras$boot.type
+  wild <- extras$wild
   if (!is.null(sigma)) {
     warning("A user-supplied 'sigma' is used for the standard errors of the original fit ",
             "only; the bootstrap fits estimate the noise level (as in hdi).", call. = FALSE)
@@ -146,24 +154,44 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                     lambda = lambda, robust = robust, parallel = parallel, ncores = ncores)
   }
 
-  # Centred bootstrap distribution and individual p-values.
+  # Centred bootstrap distribution. The resampling draws are made here, as in
+  # hdi; the bootstrap under the complete null hypothesis reuses them.
   if (gaussian.stub) {
     cboot.dist <- replicate(B, rnorm(ncol(x)))
+  } else if (boot.type == "xyz") {
+    hats <- .xyz_hats(x, Z, betalasso, rc)
+    index <- .xyz_index(nrow(x), B)
+    compute_xyz <- function(yvec, truth) {
+      .xyz_cbootdist(hats, index, yvec, truth, betainit = betainit, lambda = lambda,
+                     robust = robust, parallel = parallel, ncores = ncores)
+    }
+    cboot.dist <- compute_xyz(hats$yhat, betalasso)
   } else {
-    rstar <- resample(r = rc, B = B, wild = wild)
+    rstar <- resample(r = rc, B = B, wild = wild, multiplier = extras$multiplier)
     ystar <- as.vector(x %*% betalasso) + rstar
     cboot.dist <- compute(ystar, boot.truth = betalasso)
   }
-  pval <- .boot_pvalues(bproj, se, cboot.dist, B)
+  if (boot.type == "xyz") cboot.dist <- .drop_invalid_draws(cboot.dist)
+  B.eff <- ncol(cboot.dist)
+  pval <- .boot_pvalues(bproj, se, cboot.dist, B.eff)
 
-  # Multiple testing adjustment.
+  # Bootstrap under the complete null hypothesis (for Westfall-Young and group
+  # p-values), reusing the resampled errors, then the multiple testing adjustment.
   cboot.dist.underH0c <- NULL
-  if (multiplecorr.method == "WY") {
-    # Bootstrap under the complete null hypothesis, reusing the resampled errors.
-    cboot.dist.underH0c <- if (gaussian.stub) replicate(B, rnorm(ncol(x))) else compute(0 + rstar, 0)
-    pcorr <- .boot_wy(bproj, se, cboot.dist.underH0c, B)
+  if (extras$boot.H0c) {
+    cboot.dist.underH0c <- if (gaussian.stub) {
+      replicate(B, rnorm(ncol(x)))
+    } else if (boot.type == "xyz") {
+      compute_xyz(hats$e, 0)
+    } else {
+      compute(0 + rstar, 0)
+    }
+    if (boot.type == "xyz") cboot.dist.underH0c <- .drop_invalid_draws(cboot.dist.underH0c)
+  }
+  pcorr <- if (multiplecorr.method == "WY") {
+    .boot_wy(bproj, se, cboot.dist.underH0c, ncol(cboot.dist.underH0c))
   } else {
-    pcorr <- .boot_padjust(pval, multiplecorr.method, B, ncol(x))
+    .boot_padjust(pval, multiplecorr.method, B.eff, ncol(x))
   }
 
   out <- list(pval = as.vector(pval), pval.corr = pcorr, sigmahat = sigmahat,
@@ -181,12 +209,15 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
       rownames(out$cboot.dist.underH0c) <- names(out$bhat)
     }
   }
+  tstat <- stats::setNames(bproj / se, colnames(x))
   out <- c(out, list(
-    boot.type = if (wild) "wild" else "residual",
-    multiplier = if (wild) "gaussian" else NULL,
-    robust = robust, gaussian.stub = gaussian.stub, B.eff = B,
-    tstat = stats::setNames(bproj / se, colnames(x)),
-    boot.summary = .boot_summary(cboot.dist, cboot.dist.underH0c)
+    boot.type = boot.type, multiplier = extras$multiplier, robust = robust,
+    gaussian.stub = gaussian.stub,
+    B.eff = c(centred = B.eff, H0c = if (is.null(cboot.dist.underH0c)) NA else ncol(cboot.dist.underH0c)),
+    tstat = tstat,
+    boot.summary = .boot_summary(cboot.dist, cboot.dist.underH0c),
+    group.summary = .boot_group_summary(extras$groups, cboot.dist, cboot.dist.underH0c),
+    boot.index = if (boot.type == "xyz" && return.bootdist) index
   ))
   class(out) <- c("silm_boot_lasso_proj", "silm_proj")
   out
@@ -197,6 +228,27 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
     .stop("'B' must be an integer >= 2.")
   }
   B
+}
+
+# Remove bootstrap samples that could not be computed (xyz-paired bootstrap
+# with a non-positive normaliser), with a warning.
+.drop_invalid_draws <- function(dist) {
+  bad <- colSums(is.na(dist)) > 0
+  if (!any(bad)) return(dist)
+  warning(sum(bad), " of ", ncol(dist), " bootstrap samples were discarded (non-positive ",
+          "normaliser Z*'X*/n); see 'B.eff'.", call. = FALSE)
+  if (sum(!bad) < 2) .stop("Fewer than 2 usable bootstrap samples.")
+  dist[, !bad, drop = FALSE]
+}
+
+# Summaries per group of coefficients (for simultaneous inference over groups
+# without storing the full bootstrap distributions).
+.boot_group_summary <- function(groups, cboot.dist, cboot.dist.underH0c) {
+  if (is.null(groups)) return(NULL)
+  lapply(groups, function(G) {
+    c(list(index = G), .boot_summary(cboot.dist[G, , drop = FALSE],
+                                     if (!is.null(cboot.dist.underH0c)) cboot.dist.underH0c[G, , drop = FALSE]))
+  })
 }
 
 # Per bootstrap sample: max, min and max |.| of the studentized bootstrap
