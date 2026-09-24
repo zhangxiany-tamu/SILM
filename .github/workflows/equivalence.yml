@@ -1,0 +1,64 @@
+# Live equivalence check against the archived CRAN packages
+# (SILM 1.0.0, hdi 0.1-10 / 0.1-6, scalreg 1.0.1): the archived code and the
+# current code are run side by side and compared with identical().
+name: equivalence
+
+on:
+  push:
+    branches: [main]
+    paths: ['R/**', 'DESCRIPTION', 'validation/**', '.github/workflows/equivalence.yml']
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: 'Scenario tier (fast or full)'
+        default: 'fast'
+
+permissions:
+  contents: read
+
+jobs:
+  equivalence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      OPENBLAS_NUM_THREADS: 1
+      TIER: ${{ github.event.inputs.tier || (github.event_name == 'schedule' && 'full') || 'fast' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::callr, any::lars, any::covr, any::linprog, any::SIS
+          needs: check
+
+      - name: Cache oracle libraries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/R/SILM-dev
+          key: silm-oracles-${{ runner.os }}-${{ hashFiles('validation/setup_legacy_libs.R') }}-r-release
+
+      - name: Build oracle libraries (archived CRAN packages)
+        run: Rscript validation/setup_legacy_libs.R
+
+      - name: Run equivalence harness
+        run: Rscript validation/run_equivalence.R --tier "$TIER" --glmnet user --cores 4
+
+      - name: Job summary
+        if: always()
+        run: |
+          f=$(ls -t validation/reports/equivalence-*.md 2>/dev/null | head -1)
+          if [ -n "$f" ]; then cat "$f" >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: equivalence-report-${{ env.TIER }}
+          path: validation/reports/

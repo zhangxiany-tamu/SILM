@@ -1,0 +1,35 @@
+SILM is free software, licensed under the GNU General Public License version 3
+(GPL-3). The SILM code written for the package is Copyright (C) Xianyang Zhang,
+Guang Cheng and Jincheng Bai.
+
+Parts of SILM are derived from other software:
+
+1. The 'hdi' package, version 0.1-10 (archived on CRAN on 2026-07-10;
+   tarball hdi_0.1-10.tar.gz, sha256
+   15f37a620e2c51b158d50472e442b34391c7eef92acd9291e8d468e14ba49206),
+   Copyright (C) Lukas Meier, Ruben Dezeure, Nicolai Meinshausen,
+   Martin Maechler and Peter Buehlmann, licensed under the GNU GPL
+   (any version) and redistributed here under GPL-3.
+
+   Derived files: R/nodewise_api.R, R/nodewise_tuning.R, R/nodewise_znz.R,
+   R/nodewise_final.R (from hdi's R/helpers.nodewise.R, written by Ruben
+   Dezeure), and the files of the lasso.proj()/boot.lasso.proj() port
+   (from hdi's R/lasso-proj.R, R/boot.lasso-proj.R, R/helpers.R and
+   R/methods.R), which are marked as such in their headers.
+
+   Modifications (GPL-3 section 5a): the code was split into smaller files,
+   the Z&Z switch of the nodewise lasso became an explicit argument, the
+   cross-validation folds can be supplied, parallel execution uses a common
+   helper, messages are printed only when verbose = TRUE, unreachable
+   branches were removed, argument checks were added, and further changes are
+   listed in NEWS.md. The numerical computations of the hdi-compatible code
+   paths are unchanged.
+
+2. The scaled lasso (R/scaled_lasso.R) is an independent implementation of the
+   algorithm of Sun and Zhang (2012, Biometrika 99:879-898) with the penalty
+   level of Sun and Zhang (2013, JMLR 14:3385-3418). Its numerical conventions
+   were chosen to agree with the archived 'scalreg' package (version 1.0.1,
+   Copyright (C) Tingni Sun, GPL-2); no code of scalreg is included.
+
+3. The column standardisation used in ST() (R/st_screen.R) is an independent
+   base-R implementation; no code of the 'SIS' package is included.

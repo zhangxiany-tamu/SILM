@@ -6,7 +6,13 @@ Authors@R: c(
     person("Xianyang", "Zhang", role = c("aut", "cre"),
            email = "zhangxiany@stat.tamu.edu"),
     person("Guang", "Cheng", role = "aut"),
-    person("Jincheng", "Bai", role = "aut"))
+    person("Jincheng", "Bai", role = "aut"),
+    person("Ruben", "Dezeure", role = c("ctb", "cph"),
+           comment = "nodewise lasso, lasso.proj and bootstrap code from hdi"),
+    person("Lukas", "Meier", role = c("ctb", "cph"), comment = "code from hdi"),
+    person("Nicolai", "Meinshausen", role = c("ctb", "cph"), comment = "code from hdi"),
+    person("Martin", "Maechler", role = c("ctb", "cph"), comment = "code from hdi"),
+    person("Peter", "B\u00fchlmann", role = c("ctb", "cph"), comment = "code from hdi"))
 Description: Simultaneous inference procedures for high-dimensional linear
     models as described by Zhang, X., and Cheng, G. (2017)
     <doi:10.1080/01621459.2016.1166114>.
@@ -15,6 +21,7 @@ Imports: glmnet (>= 4.1), lars, parallel, stats, utils
 Suggests: testthat (>= 3.0.0), withr
 Config/testthat/edition: 3
 License: GPL-3
+Copyright: See file inst/COPYRIGHTS.
 URL: https://github.com/zhangxiany-tamu/SILM
 BugReports: https://github.com/zhangxiany-tamu/SILM/issues
 Encoding: UTF-8

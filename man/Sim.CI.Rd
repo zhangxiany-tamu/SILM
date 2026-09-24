@@ -118,6 +118,6 @@ dimensional parameters in high dimensional linear models. \emph{Journal
 of the Royal Statistical Society, Series B}, 76, 217-242.
 }
 \seealso{
-\code{\link[=SR]{SR()}}, \code{\link[=Step]{Step()}}, \code{\link[=ST]{ST()}}, \code{\link[=boot.lasso.proj]{boot.lasso.proj()}} for the bootstrapped
+\code{\link[=SR]{SR()}}, \code{\link[=Step]{Step()}}, \code{\link[=ST]{ST()}}; \code{boot.lasso.proj()} for the bootstrapped
 de-sparsified lasso of Dezeure, Bühlmann and Zhang (2017).
 }

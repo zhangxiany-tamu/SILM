@@ -9,7 +9,14 @@
 source(file.path("validation", "paths.R"))
 
 ARCHIVE_URL <- "https://cran.r-project.org/src/contrib/Archive"
-CRAN <- "https://cloud.r-project.org"
+CRAN <- local({
+  repos <- getOption("repos")
+  if (is.null(repos) || !nzchar(repos[1]) || identical(unname(repos[1]), "@CRAN@")) {
+    "https://cloud.r-project.org"
+  } else {
+    repos
+  }
+})
 
 TARBALLS <- list(
   scalreg = list(path = "scalreg/scalreg_1.0.1.tar.gz",
@@ -48,7 +55,7 @@ install_cran <- function(pkgs, lib, lib_search) {
     nzchar(system.file(package = p, lib.loc = lib_search))
   }, logical(1))]
   if (length(missing)) {
-    utils::install.packages(missing, lib = lib, repos = CRAN, type = "source",
+    utils::install.packages(missing, lib = lib, repos = CRAN, type = getOption("pkgType"),
                             dependencies = c("Depends", "Imports", "LinkingTo"),
                             Ncpus = 4L, quiet = TRUE)
   }

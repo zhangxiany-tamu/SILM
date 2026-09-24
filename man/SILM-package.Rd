@@ -26,5 +26,14 @@ Authors:
   \item Jincheng Bai
 }
 
+Other contributors:
+\itemize{
+  \item Ruben Dezeure (nodewise lasso, lasso.proj and bootstrap code from hdi) [contributor, copyright holder]
+  \item Lukas Meier (code from hdi) [contributor, copyright holder]
+  \item Nicolai Meinshausen (code from hdi) [contributor, copyright holder]
+  \item Martin Maechler (code from hdi) [contributor, copyright holder]
+  \item Peter Bühlmann (code from hdi) [contributor, copyright holder]
+}
+
 }
 \keyword{internal}

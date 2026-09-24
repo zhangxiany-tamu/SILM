@@ -29,7 +29,7 @@
 #'     `up.st`).}
 #' @inheritSection SR Nodewise tuning
 #' @inherit SR references
-#' @seealso [SR()], [Step()], [ST()], [boot.lasso.proj()] for the bootstrapped
+#' @seealso [SR()], [Step()], [ST()]; `boot.lasso.proj()` for the bootstrapped
 #'   de-sparsified lasso of Dezeure, Bühlmann and Zhang (2017).
 #' @examples
 #' ## The function is intended for large n and p.
