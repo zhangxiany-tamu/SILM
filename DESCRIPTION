@@ -11,7 +11,7 @@ Description: Simultaneous inference procedures for high-dimensional linear
     models as described by Zhang, X., and Cheng, G. (2017)
     <doi:10.1080/01621459.2016.1166114>.
 Depends: scalreg
-Imports: glmnet, hdi, SIS, stats, parallel, utils
+Imports: glmnet, hdi, lars, SIS, stats, parallel, utils
 License: GPL-3
 URL: https://github.com/zhangxiany-tamu/SILM
 BugReports: https://github.com/zhangxiany-tamu/SILM/issues
