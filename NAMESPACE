@@ -3,6 +3,7 @@
 S3method(confint,silm_proj)
 S3method(groupTest,default)
 S3method(groupTest,silm_boot_lasso_proj)
+S3method(print,silm_confint)
 S3method(print,silm_proj)
 export(SR)
 export(ST)

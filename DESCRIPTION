@@ -1,6 +1,6 @@
 Package: SILM
 Type: Package
-Title: Simultaneous Inference for Linear Models
+Title: Simultaneous Inference for High-Dimensional Linear Models
 Version: 1.0.0.9000
 Authors@R: c(
     person("Xianyang", "Zhang", role = c("aut", "cre"),
@@ -13,12 +13,22 @@ Authors@R: c(
     person("Nicolai", "Meinshausen", role = c("ctb", "cph"), comment = "code from hdi"),
     person("Martin", "Maechler", role = c("ctb", "cph"), comment = "code from hdi"),
     person("Peter", "B\u00fchlmann", role = c("ctb", "cph"), comment = "code from hdi"))
-Description: Simultaneous inference procedures for high-dimensional linear
-    models as described by Zhang, X., and Cheng, G. (2017)
-    <doi:10.1080/01621459.2016.1166114>.
+Description: Simultaneous inference for high-dimensional linear models based
+    on the de-biased (de-sparsified) lasso and the bootstrap: the procedures of
+    Zhang and Cheng (2017) <doi:10.1080/01621459.2016.1166114> for
+    simultaneous confidence intervals, support recovery, testing for sparse
+    signals and stepdown multiple testing; and the bootstrapped de-sparsified
+    lasso of Dezeure, Buehlmann and Zhang (2017)
+    <doi:10.1007/s11749-017-0554-2> with residual, wild and xyz-paired
+    bootstrap, Westfall-Young multiple testing, simultaneous confidence
+    intervals and group tests. Includes lasso.proj() and boot.lasso.proj(),
+    which reproduce the corresponding functions of the archived 'hdi' package,
+    and a scaled lasso following Sun and Zhang (2012)
+    <doi:10.1093/biomet/ass043>.
 Depends: R (>= 4.1.0)
 Imports: glmnet (>= 4.1), lars, MASS, parallel, stats, utils
-Suggests: testthat (>= 3.0.0), withr
+Suggests: knitr, rmarkdown, testthat (>= 3.0.0), withr
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 License: GPL-3
 Copyright: See file inst/COPYRIGHTS.

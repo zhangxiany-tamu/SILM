@@ -1,0 +1,152 @@
+---
+title: "Simultaneous inference with SILM"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Simultaneous inference with SILM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+SILM provides simultaneous inference for the high-dimensional linear model
+$Y = X\beta + \epsilon$, based on the de-biased (de-sparsified) lasso and the
+bootstrap. It implements two closely related papers:
+
+* **Zhang and Cheng (2017, JASA)** bootstrap the *linear part* of the de-biased
+  lasso with Gaussian multipliers: simultaneous confidence intervals
+  (`Sim.CI()`), support recovery (`SR()`), testing for sparse signals (`ST()`)
+  and stepdown multiple testing (`Step()`).
+* **Dezeure, Bühlmann and Zhang (2017, TEST)** bootstrap the *entire*
+  de-sparsified lasso (`boot.lasso.proj()`): residual, wild (Gaussian or
+  Mammen multipliers) or xyz-paired bootstrap, robust standard errors,
+  Westfall–Young multiple testing, simultaneous confidence intervals and group
+  tests.
+
+The examples below use small dimensions so that the vignette builds quickly;
+the methods are intended for large $p$.
+
+```{r}
+library(SILM)
+set.seed(1)
+n <- 100
+p <- 60
+Sigma <- 0.9^abs(outer(1:p, 1:p, "-"))            # Toeplitz design
+X <- matrix(rnorm(n * p), n, p) %*% chol(Sigma)
+beta <- c(1.5, -1, 2, rep(0, p - 3))
+Y <- as.vector(X %*% beta + rt(n, 4) / sqrt(2))
+```
+
+The model has no intercept. The data above have mean zero; for real data use
+`center = TRUE` (or centre the data beforehand).
+
+## Zhang and Cheng (2017)
+
+Here $p > n/2$, so the matrix $\Theta$ (the inverse of the population Gram
+matrix) is estimated by the nodewise lasso. It depends only on the design and
+can be computed once:
+
+```{r}
+Theta <- Theta.hat(X)
+```
+
+Simultaneous 95% confidence intervals for $\beta_1, \dots, \beta_5$ (note that
+`alpha` is the *confidence level* in `Sim.CI()`):
+
+```{r}
+ci <- Sim.CI(X, Y, set = 1:5, M = 500, alpha = 0.95, Theta = Theta)
+ci$band.st
+```
+
+Support recovery and stepdown multiple testing at familywise level 5%:
+
+```{r}
+SR(X, Y, Theta = Theta)
+Step(X, Y, M = 500, alpha = 0.05, Theta = Theta)
+```
+
+Testing whether any of the variables 4 to 60 has a non-zero coefficient, with
+a screening sub-sample of size $0.3n$:
+
+```{r}
+ST(X, Y, sub.size = 0.3, test.set = 4:p, M = 500)[c(3, 4)]
+```
+
+## Dezeure, Bühlmann and Zhang (2017)
+
+`boot.lasso.proj()` bootstraps the entire estimator. The paper recommends the
+robust standard error and, for heteroscedastic errors, the wild bootstrap.
+`boot.shortcut = TRUE` refits the bootstrap lasso at the original tuning
+parameter, which is much faster.
+
+```{r}
+fit <- boot.lasso.proj(X, Y, B = 200, robust = TRUE, wild = TRUE,
+                       boot.shortcut = TRUE, return.bootdist = TRUE)
+fit
+```
+
+Individual and simultaneous confidence intervals:
+
+```{r}
+confint(fit, parm = 1:5)
+confint(fit, type = "simultaneous", group = 1:5)
+```
+
+Group tests of $H_{0,G}: \beta_j = 0$ for all $j \in G$:
+
+```{r}
+groupTest(fit, list(signal = 1:3, noise = 4:p))
+```
+
+Mammen multipliers and the xyz-paired bootstrap are selected with
+`multiplier = "mammen"` and `boot.type = "xyz"`.
+
+`lasso.proj()` computes the de-sparsified lasso with asymptotic Gaussian
+p-values and intervals (the "original" estimator of the paper):
+
+```{r}
+lp <- lasso.proj(X, Y, robust = TRUE)
+confint(lp, parm = 1:3)
+```
+
+## Two bootstraps
+
+`Sim.CI()` bootstraps only the linear part $\hat\Theta X^\top \epsilon / n$
+of the de-biased lasso, which is fast and needs no refitting. `boot.lasso.proj()`
+refits the lasso for every bootstrap sample. Dezeure, Bühlmann and Zhang (2017)
+found that the latter often has better finite-sample coverage. It also handles
+heteroscedastic errors (with the wild bootstrap and robust standard errors).
+
+## Reproducing results of the archived versions
+
+SILM 2.0.0 reproduces the archived SILM 1.0.0 and hdi 0.1-10 exactly (the
+same numbers under the same random seed):
+
+* `SR()`, `Sim.CI()`, `Step()`, `ST()`: results obtained with SILM 1.0.0 and
+  hdi 0.1-6 (January to March 2019) are the default (`nodewise = "cv"`).
+  Results obtained with hdi 0.1-7 to 0.1-10 (March 2019 to July 2026) need
+  `nodewise = "ZnZ"`. For `ST()`, `legacy = TRUE` also restores three
+  behaviours of SILM 1.0.0 that were corrected (see `?ST`).
+* `lasso.proj()`, `boot.lasso.proj()`: identical to hdi 0.1-10, except for
+  `lasso.proj(family = "binomial")`, where hdi's results need
+  `legacy = TRUE`.
+* Results computed with R < 3.6.0 used a different random sampling
+  algorithm: call `RNGkind(sample.kind = "Rounding")` before `set.seed()`.
+
+The equivalence is verified continuously against the archived CRAN packages
+(see the `validation/` directory of the source repository).
+
+## References
+
+Zhang, X. and Cheng, G. (2017). Simultaneous inference for high-dimensional
+linear models. *Journal of the American Statistical Association*, 112,
+757–768.
+
+Dezeure, R., Bühlmann, P. and Zhang, C.-H. (2017). High-dimensional
+simultaneous inference with the bootstrap. *TEST*, 26, 685–719.
+
+Dezeure, R., Bühlmann, P., Meier, L. and Meinshausen, N. (2015).
+High-dimensional inference: confidence intervals, p-values and R-software hdi.
+*Statistical Science*, 30, 533–558.

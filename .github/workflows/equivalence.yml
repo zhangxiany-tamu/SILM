@@ -18,6 +18,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: equivalence-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   equivalence:
     runs-on: ubuntu-latest

@@ -1,0 +1,56 @@
+bibentry(
+  bibtype = "Article",
+  header = "To cite SR(), Sim.CI(), Step() or ST() in publications, please use:",
+  title = "Simultaneous Inference for High-Dimensional Linear Models",
+  author = c(person("Xianyang", "Zhang"), person("Guang", "Cheng")),
+  journal = "Journal of the American Statistical Association",
+  year = "2017",
+  volume = "112",
+  number = "518",
+  pages = "757--768",
+  doi = "10.1080/01621459.2016.1166114",
+  textVersion = paste(
+    "Zhang, X. and Cheng, G. (2017).",
+    "Simultaneous inference for high-dimensional linear models.",
+    "Journal of the American Statistical Association, 112(518), 757-768.",
+    "doi:10.1080/01621459.2016.1166114"
+  )
+)
+
+bibentry(
+  bibtype = "Article",
+  header = "To cite boot.lasso.proj() (and its simultaneous intervals and group tests), please use:",
+  title = "High-Dimensional Simultaneous Inference with the Bootstrap",
+  author = c(person("Ruben", "Dezeure"), person("Peter", "Bühlmann"),
+             person("Cun-Hui", "Zhang")),
+  journal = "TEST",
+  year = "2017",
+  volume = "26",
+  number = "4",
+  pages = "685--719",
+  doi = "10.1007/s11749-017-0554-2",
+  textVersion = paste(
+    "Dezeure, R., Buehlmann, P. and Zhang, C.-H. (2017).",
+    "High-dimensional simultaneous inference with the bootstrap.",
+    "TEST, 26(4), 685-719. doi:10.1007/s11749-017-0554-2"
+  )
+)
+
+bibentry(
+  bibtype = "Article",
+  header = "For lasso.proj() (the de-sparsified lasso and the 'hdi' software), please also cite:",
+  title = "High-Dimensional Inference: Confidence Intervals, p-Values and {R}-Software {hdi}",
+  author = c(person("Ruben", "Dezeure"), person("Peter", "Bühlmann"),
+             person("Lukas", "Meier"), person("Nicolai", "Meinshausen")),
+  journal = "Statistical Science",
+  year = "2015",
+  volume = "30",
+  number = "4",
+  pages = "533--558",
+  doi = "10.1214/15-STS527",
+  textVersion = paste(
+    "Dezeure, R., Buehlmann, P., Meier, L. and Meinshausen, N. (2015).",
+    "High-dimensional inference: confidence intervals, p-values and R-software hdi.",
+    "Statistical Science, 30(4), 533-558. doi:10.1214/15-STS527"
+  )
+)

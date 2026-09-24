@@ -4,9 +4,56 @@
 \name{SILM-package}
 \alias{SILM}
 \alias{SILM-package}
-\title{SILM: Simultaneous Inference for Linear Models}
+\title{SILM: Simultaneous Inference for High-Dimensional Linear Models}
 \description{
-Simultaneous inference procedures for high-dimensional linear models as described by Zhang, X., and Cheng, G. (2017) \doi{10.1080/01621459.2016.1166114}.
+Simultaneous inference for the high-dimensional linear model
+\eqn{Y = X\beta + \epsilon} based on the de-biased (de-sparsified) lasso and
+the bootstrap.
+}
+\section{Zhang and Cheng (2017)}{
+
+Bootstrap of the linear part of the de-biased lasso with Gaussian
+multipliers:
+\itemize{
+\item \code{\link[=Sim.CI]{Sim.CI()}}: simultaneous confidence intervals for a group of coefficients;
+\item \code{\link[=SR]{SR()}}: support recovery;
+\item \code{\link[=ST]{ST()}}: testing for sparse signals in a large group (screening plus
+bootstrap test);
+\item \code{\link[=Step]{Step()}}: stepdown multiple testing with familywise error control;
+\item \code{\link[=Theta.hat]{Theta.hat()}}: the estimate of the inverse Gram matrix they use.
+}
+}
+
+\section{Dezeure, Bühlmann and Zhang (2017)}{
+
+Bootstrap of the entire de-sparsified lasso (residual, wild with Gaussian or
+Mammen multipliers, or xyz-paired bootstrap), with robust standard errors:
+\itemize{
+\item \code{\link[=boot.lasso.proj]{boot.lasso.proj()}}: p-values and Westfall-Young adjusted p-values;
+\item \code{\link[=confint.silm_proj]{confint.silm_proj()}}: individual and simultaneous confidence intervals;
+\item \code{\link[=groupTest]{groupTest()}}: group tests.
+}
+
+\code{\link[=lasso.proj]{lasso.proj()}} computes the de-sparsified lasso with asymptotic Gaussian
+inference (van de Geer et al., 2014). \code{lasso.proj()} and \code{boot.lasso.proj()}
+reproduce the functions of the archived package 'hdi' (version 0.1-10).
+}
+
+\section{Reproducibility}{
+
+SILM 2.0.0 reproduces SILM 1.0.0 and hdi 0.1-10 exactly (the same numbers
+under the same random seed); see the sections "Nodewise tuning" in \code{\link[=SR]{SR()}}
+and "Compatibility with hdi 0.1-10" in \code{\link[=lasso.proj]{lasso.proj()}} and
+\code{\link[=boot.lasso.proj]{boot.lasso.proj()}} for the options that select older behaviour.
+}
+
+\references{
+Zhang, X. and Cheng, G. (2017). Simultaneous inference for
+high-dimensional linear models. \emph{Journal of the American Statistical
+Association}, 112, 757-768.
+
+Dezeure, R., Bühlmann, P. and Zhang, C.-H. (2017). High-dimensional
+simultaneous inference with the bootstrap. \emph{TEST}, 26, 685-719.
 }
 \seealso{
 Useful links:

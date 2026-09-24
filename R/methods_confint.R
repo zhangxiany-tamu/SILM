@@ -161,7 +161,22 @@ confint.silm_proj <- function(object, parm, level = 0.95,
   dimnames(m) <- list(pnames[idx], c("lower", "upper"))
   attr(m, "simultaneous") <- list(group = G, stat = stat, level = level, quantiles = quants,
                                   quantile.type = qtype, B = B)
+  class(m) <- c("silm_confint", "matrix", "array")
   m
+}
+
+#' @export
+print.silm_confint <- function(x, digits = getOption("digits"), ...) {
+  info <- attr(x, "simultaneous")
+  if (!is.null(info)) {
+    cat(sprintf("Simultaneous %s%% confidence intervals (group of %d coefficients; %s; B = %d)\n",
+                format(100 * info$level), length(info$group),
+                if (info$stat == "maxmin") "max/min statistic" else "max |T| statistic", info$B))
+  }
+  m <- unclass(x)
+  attr(m, "simultaneous") <- NULL
+  print(m, digits = digits, ...)
+  invisible(x)
 }
 
 # Per-sample max, min and max |.| over the group G of the studentized bootstrap
