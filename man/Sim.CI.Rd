@@ -19,15 +19,12 @@ Sim.CI(X, Y, set, M = 500, alpha = 0.95)
 }
 \value{
 The de-biased Lasso estimator, the confidence bands (lower bound and
- upper bound) delivered by the non-studentized and the studentized statistics.
+upper bound) delivered by the non-studentized and the studentized
+statistics.
 }
 \description{
 This function implements the method for constructing simultaneous confidence
 interval in Zhang and Cheng (2017).
-}
-\references{
-Zhang, X., and Cheng, G. (2017) Simultaneous Inference for High-dimensional
-Linear Models, \emph{Journal of the American Statistical Association}, 112, 757-768.
 }
 \examples{
 ## The function is intended for large n and p.
@@ -44,4 +41,9 @@ beta <- rep(0,p)
 beta[1:s0] <- runif(s0,0,2)
 Y <- X\%*\%beta+rt(n,4)/sqrt(2)
 Sim.CI(X, Y, set)
+}
+\references{
+Zhang, X., and Cheng, G. (2017) Simultaneous Inference for
+High-dimensional Linear Models, \emph{Journal of the American Statistical
+Association}, 112, 757-768.
 }

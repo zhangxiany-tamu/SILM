@@ -16,11 +16,8 @@ The sets of active variables selected by the support recovery
 procedure and the scaled Lasso.
 }
 \description{
-This function implements the support recovery procedure in Zhang and Cheng (2017).
-}
-\references{
-Zhang, X., and Cheng, G. (2017) Simultaneous Inference for High-dimensional
-Linear Models, \emph{Journal of the American Statistical Association}, 112, 757-768.
+This function implements the support recovery procedure in Zhang and Cheng
+(2017).
 }
 \examples{
 ## The function is intended for large n and p.
@@ -37,4 +34,9 @@ beta <- rep(0,p)
 beta[1:s0] <- runif(s0,1,2)
 Y <- X\%*\%beta+rt(n,4)/sqrt(2)
 SR(X, Y)
+}
+\references{
+Zhang, X., and Cheng, G. (2017) Simultaneous Inference for
+High-dimensional Linear Models, \emph{Journal of the American Statistical
+Association}, 112, 757-768.
 }

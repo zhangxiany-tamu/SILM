@@ -27,10 +27,6 @@ and whether the tests get rejected at the level alpha.
 This function implements the method for testing sparse signals in
 Zhang and Cheng (2017).
 }
-\references{
-Zhang, X., and Cheng, G. (2017) Simultaneous Inference for High-dimensional
-Linear Models, \emph{Journal of the American Statistical Association}, 112, 757-768.
-}
 \examples{
 ## The function is intended for large n and p.
 ## Use small p here for illustration purpose only.
@@ -50,4 +46,9 @@ sub.size <- n*0.3
 ST(X, Y, sub.size, test.set)
 test.set <- s0:p
 ST(X, Y, sub.size, test.set)
+}
+\references{
+Zhang, X., and Cheng, G. (2017) Simultaneous Inference for
+High-dimensional Linear Models, \emph{Journal of the American Statistical
+Association}, 112, 757-768.
 }

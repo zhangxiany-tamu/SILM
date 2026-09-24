@@ -21,10 +21,6 @@ A vector indicating which hypotheses are being rejected.
 \description{
 This function implements the stepdown method in Zhang and Cheng (2017).
 }
-\references{
-Zhang, X., and Cheng, G. (2017) Simultaneous Inference for High-dimensional
-Linear Models, \emph{Journal of the American Statistical Association}, 112, 757-768.
-}
 \examples{
 ## The function is intended for large n and p.
 ## Use small p here for illustration purpose only.
@@ -40,4 +36,9 @@ beta <- rep(0,p)
 beta[1:s0] <- runif(s0,1,2)
 Y <- X\%*\%beta+rt(n,4)/sqrt(2)
 Step(X, Y, M=500, alpha=0.05)
+}
+\references{
+Zhang, X., and Cheng, G. (2017) Simultaneous Inference for
+High-dimensional Linear Models, \emph{Journal of the American Statistical
+Association}, 112, 757-768.
 }
