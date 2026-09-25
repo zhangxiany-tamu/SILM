@@ -12,7 +12,7 @@
 
 # Studentized bootstrap statistics (b* - boot.truth) / se* (p x B matrix).
 .boot_cbootdist <- function(ystar, boot.truth, x, Z, betainit, lambda, robust, parallel,
-                            ncores, divisor = "n") {
+                            ncores, divisor) {
   initstar <- boot.initial.fit(x = x, ystar = ystar, betainit = betainit, lambda = lambda,
                                parallel = parallel, ncores = ncores)
   betainitstar <- do.call(cbind, lapply(initstar, function(out) out$betalasso))
@@ -73,7 +73,7 @@ boot.initial.fit <- function(x, ystar, betainit, lambda, parallel, ncores) {
 
 # Bootstrap standard errors (p x B matrix).
 boot.se <- function(x, ystar, Z, betainitstar, sigmahatstar, robust, parallel, ncores,
-                    divisor = "n") {
+                    divisor) {
   if (robust) {
     se_one <- function(b) {
       est.stderr.despars.lasso(x = x, y = ystar[, b], Z = Z, betalasso = betainitstar[, b],

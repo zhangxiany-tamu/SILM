@@ -24,8 +24,10 @@ despars.lasso.est <- function(x, y, Z, betalasso) {
 # so that t(Z_j) x_j / n = 1), or the robust (sandwich) version. For the robust
 # version, divisor = "n" is hdi's (and Section 3.3.2's) normalisation;
 # divisor = "n-s" gives equation (5) of Dezeure, Buehlmann and Zhang (2017),
-# i.e. the standard error multiplied by sqrt(n / (n - s_hat)).
-est.stderr.despars.lasso <- function(x, y, Z, betalasso, sigmahat, robust, divisor = "n") {
+# i.e. the standard error multiplied by sqrt(n / (n - s_hat)). `divisor` has
+# no default (as the helpers that pass it on): the exported default "n-s"
+# differs from hdi's "n", so every caller must say which one it uses.
+est.stderr.despars.lasso <- function(x, y, Z, betalasso, sigmahat, robust, divisor) {
   if (robust) {
     se <- sandwich.var.est.stderr(x = x, y = y, Z = Z, betainit = betalasso)
     .robust_df_adjust(se, nrow(x), betalasso, divisor)
@@ -36,11 +38,15 @@ est.stderr.despars.lasso <- function(x, y, Z, betalasso, sigmahat, robust, divis
 
 .robust_df_adjust <- function(se, n, betalasso, divisor) {
   if (identical(divisor, "n")) return(se)
-  df <- n - sum(betalasso != 0)
-  if (df <= 0) {
-    .stop("robust.divisor = \"n-s\" needs fewer selected variables than observations.")
+  s <- sum(betalasso != 0)
+  if (s >= n) {
+    # (A numeric betainit of lasso.proj() is checked earlier, by
+    # .check_divisor_betainit(), with a message that names the default.)
+    .stop("robust.divisor = \"n-s\" divides by n - s, where s is the number of non-zero ",
+          "coefficients of the initial estimate; here s = ", s, " >= n = ", n, ". Use ",
+          "robust.divisor = \"n\" (hdi's normalisation).")
   }
-  se * sqrt(n / df)
+  se * sqrt(n / (n - s))
 }
 
 # Robust standard error (Dezeure, Buehlmann and Zhang, 2017, Section 3.3.2):

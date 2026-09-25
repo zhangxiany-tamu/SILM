@@ -22,7 +22,7 @@ lasso.proj(
   robust = FALSE,
   do.ZnZ = FALSE,
   legacy = FALSE,
-  robust.divisor = c("n", "n-s")
+  robust.divisor = c("n-s", "n")
 )
 }
 \arguments{
@@ -50,7 +50,9 @@ OpenMP threads, forked workers can occasionally stall; setting
 \item{betainit}{Initial estimator: \code{"cv lasso"} (default; lasso with
 lambda.1se from 10-fold cross-validation), \code{"scaled lasso"}, or a numeric
 vector of coefficients for the centred (and scaled) design, which requires
-\code{sigma}.}
+\code{sigma}. With \code{robust = TRUE} and the default \code{robust.divisor = "n-s"}, a
+numeric \code{betainit} must have fewer than n non-zero entries (see
+\code{robust.divisor}).}
 
 \item{sigma}{Optional noise standard deviation, overriding the estimate
 (not used with \code{robust = TRUE}, whose standard errors do not involve it,
@@ -73,15 +75,28 @@ Bühlmann and Zhang (2017), valid under heteroscedastic errors.}
 
 \item{do.ZnZ}{Choose the nodewise tuning parameter with the Z&Z rule.}
 
-\item{legacy}{Reproduce hdi exactly for \code{family = "binomial"} (see the
-section "Compatibility with hdi 0.1-10").}
+\item{legacy}{Reproduce hdi exactly for \code{family = "binomial"} (with
+\code{robust = TRUE}, also set \code{robust.divisor = "n"}; see the section
+"Compatibility with hdi 0.1-10").}
 
-\item{robust.divisor}{Normalisation of the robust standard error:
-\code{"n"} (default, as in hdi and Section 3.3.2 of Dezeure, Bühlmann and
-Zhang, 2017) or \code{"n-s"}, equation (5) of that paper, which multiplies it
-by \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))}, where \eqn{\hat s}{s} is
-the number of variables selected by the initial lasso. Only used with
-\code{robust = TRUE}.}
+\item{robust.divisor}{Normalisation of the robust standard error, only
+used with \code{robust = TRUE}: \code{"n-s"} (default) is equation (5) of
+Dezeure, Bühlmann and Zhang (2017), which multiplies the standard error
+with divisor n by \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))}, where
+\eqn{\hat s}{s} is the number of variables selected by the initial
+lasso (for a numeric \code{betainit}, its number of non-zero entries, which
+must be smaller than n; p for a dense estimate); \code{"n"} is hdi's
+normalisation (Section 3.3.2 of the paper), reproduces hdi and has no
+such restriction. The default was chosen by a pre-registered study
+that compared the two on the paper's simulation designs and a
+heteroscedastic stress design (Gaussian linear models with lasso
+initial fits), under a decision rule fixed in advance (calibration
+first, then power): TODO-DEFAULTS-NUMBERS (which metric decided and by
+how much; see \code{validation/calibration/DEFAULTS.md} and
+\code{validation/calibration/defaults-results/REPORT.md} in the source
+repository). In \code{lasso.proj()} it also applies to \code{family = "binomial"}
+(the linearised model) and to a numeric \code{betainit}, which the study did
+not cover.}
 }
 \value{
 An object of class \code{c("silm_lasso_proj", "silm_proj")}: a list with
@@ -91,15 +106,19 @@ elements \code{pval} (individual p-values), \code{pval.corr} (adjusted p-values)
 (de-sparsified lasso estimates), \code{se} (their standard errors), \code{betahat}
 (initial estimate), \code{family}, \code{method} (\code{"lasso.proj"}), \code{call}, \code{Z} (if
 \code{return.Z = TRUE}), and the SILM additions \code{robust}, \code{multiplecorr.method},
-\code{legacy} and \code{tstat} (the statistics \code{bhat / se} on the internal scale).
+\code{legacy}, \code{robust.divisor} (the normalisation of the robust standard
+errors; it has no effect when \code{robust = FALSE}) and \code{tstat} (the
+statistics \code{bhat / se} on the internal scale).
 }
 \description{
 Computes the de-sparsified (de-biased) lasso of van de Geer et al. (2014)
 and Zhang and Zhang (2014), individual p-values based on its asymptotic
 Gaussian distribution, and p-values adjusted for multiple testing. This is
 a port of \code{lasso.proj()} from the archived package 'hdi' (version 0.1-10)
-and has the same arguments and defaults. Confidence intervals are obtained
-with \link[=confint.silm_proj]{confint()}.
+and has the same arguments and defaults, plus a few additions; the results
+differ from hdi's only where the section "Compatibility with hdi 0.1-10"
+says so. Confidence intervals are obtained with
+\link[=confint.silm_proj]{confint()}.
 }
 \details{
 The columns of \code{x} are centred (and scaled if \code{standardize = TRUE}) and \code{y}
@@ -110,13 +129,21 @@ chosen by 10-fold cross-validation (or with the Z&Z rule if \code{do.ZnZ = TRUE}
 }
 \section{Compatibility with hdi 0.1-10}{
 
-For the same data, arguments and random seed, \code{lasso.proj()} returns the
-same \code{pval}, \code{pval.corr}, \code{bhat}, \code{se}, \code{betahat} and \code{sigmahat} as
-\code{hdi::lasso.proj()} and leaves the random number generator in the same
-state; this is verified against the archived hdi package (with the same
-version of glmnet; \code{multiplecorr.method = "WY"} also depends on the
-BLAS/LAPACK used by \code{MASS::mvrnorm()}). The differences are:
+For the same data, arguments and random seed (and \code{robust.divisor = "n"}
+if \code{robust = TRUE}), \code{lasso.proj()} returns the same \code{pval}, \code{pval.corr},
+\code{bhat}, \code{se}, \code{betahat} and \code{sigmahat} as \code{hdi::lasso.proj()} and leaves
+the random number generator in the same state; this is verified against
+the archived hdi package (with the same version of glmnet;
+\code{multiplecorr.method = "WY"} also depends on the BLAS/LAPACK used by
+\code{MASS::mvrnorm()}). The differences are:
 \itemize{
+\item \code{robust = TRUE}: the robust standard error uses the divisor
+\eqn{n - \hat s}{n - s} of equation (5) of Dezeure, Bühlmann and Zhang
+(2017) by default (\code{robust.divisor = "n-s"}), so its standard errors are
+larger by the factor \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))} and
+its p-values are at least as large as hdi's. hdi divided by n (Section
+3.3.2 of the paper); \code{robust.divisor = "n"} reproduces hdi exactly.
+Results with \code{robust = FALSE} (the default) are not affected.
 \item The result has class \code{c("silm_lasso_proj", "silm_proj")} instead of
 \code{"hdi"}, and the elements \code{groupTest} and \code{clusterGroupTest} (functions
 for group tests in hdi) are \code{NULL}: those tests are not provided. The

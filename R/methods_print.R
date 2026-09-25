@@ -9,7 +9,12 @@
 print.silm_proj <- function(x, n = 10L, ...) {
   boot <- identical(x$method, "boot.lasso.proj")
   cat(if (boot) "Bootstrapped de-sparsified lasso" else "De-sparsified lasso", "\n")
-  se_type <- if (isTRUE(x$robust)) "robust" else "homoscedastic"
+  se_type <- if (isTRUE(x$robust)) {
+    # hdi's divisor n (robust.divisor = "n"), or n - s (equation 5, the default).
+    sprintf("robust (divisor %s)", if (identical(x$robust.divisor, "n")) "n" else "n - s")
+  } else {
+    "homoscedastic"
+  }
   settings <- c(sprintf("family %s", x$family), sprintf("%s standard errors", se_type))
   if (boot) {
     boot_desc <- x$boot.type

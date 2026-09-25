@@ -121,11 +121,14 @@ het_rep <- function(r) {
   d <- (r - 1L) %% n_het_designs + 1L
   des <- het_designs[[d]]
   y <- (des$Q + 1) * dbz_hetero_errors(H$n)   # beta = 0: every rejection is false
+  # robust.divisor = "n" (hdi's, the default when the stored results were
+  # computed) keeps them reproducible now that the default is "n-s".
   any_holm <- function(robust) {
-    any(lasso.proj(des$X, y, Z = des$Z, robust = robust, suppress.grouptesting = TRUE)$pval.corr <= alpha)
+    any(lasso.proj(des$X, y, Z = des$Z, robust = robust, robust.divisor = "n",
+                   suppress.grouptesting = TRUE)$pval.corr <= alpha)
   }
   any_wy <- function(robust) {
-    any(boot.lasso.proj(des$X, y, Z = des$Z, B = B, robust = robust,
+    any(boot.lasso.proj(des$X, y, Z = des$Z, B = B, robust = robust, robust.divisor = "n",
                         multiplecorr.method = "WY")$pval.corr <= alpha)
   }
   c(design = d, BH = any_holm(FALSE), WY = any_wy(FALSE),

@@ -80,10 +80,32 @@
   x
 }
 
-.check_divisor <- function(divisor, robust) {
-  divisor <- match.arg(divisor, c("n", "n-s"))
-  if (divisor != "n" && !isTRUE(as.logical(robust))) {
+# robust.divisor only acts with robust = TRUE. `given` is !missing(robust.divisor)
+# in the caller (taken before any reassignment): the default "n-s" must not
+# warn on every call with robust = FALSE, and "n" (hdi's normalisation) is
+# never flagged.
+.check_divisor <- function(divisor, robust, given) {
+  divisor <- match.arg(divisor, c("n-s", "n"))
+  if (isTRUE(given) && divisor == "n-s" && !isTRUE(as.logical(robust))) {
     warning("'robust.divisor' is only used with robust = TRUE.", call. = FALSE)
   }
   divisor
+}
+
+# With robust.divisor = "n-s", s_hat is the number of non-zero entries of a
+# numeric betainit (p for a dense estimate), and equation (5) needs s_hat < n.
+# Checked before the nodewise lasso; the lasso fits are checked when their
+# standard errors are computed (.robust_df_adjust()).
+.check_divisor_betainit <- function(betainit, n, robust, divisor, given) {
+  if (!isTRUE(robust) || !identical(divisor, "n-s") || !is.numeric(betainit)) {
+    return(invisible(NULL))
+  }
+  s <- sum(betainit != 0)
+  if (s >= n) {
+    .stop("robust.divisor = \"n-s\"", if (!isTRUE(given)) " (the default)",
+          " divides by n - s, where s = ", s, " is the number of non-zero entries of ",
+          "'betainit'; it needs s < n = ", n, ". Use robust.divisor = \"n\" (hdi's ",
+          "normalisation).")
+  }
+  invisible(NULL)
 }

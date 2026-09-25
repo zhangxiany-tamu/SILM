@@ -63,5 +63,10 @@ test_that("print shows the settings and returns the object invisibly", {
   out <- capture.output(res <- print(fit))
   expect_identical(res, fit)
   expect_true(any(grepl("wild \\(gaussian multipliers\\)", out)))
-  expect_true(any(grepl("robust standard errors", out)))
+  expect_true(any(grepl("robust (divisor n - s) standard errors", out, fixed = TRUE)))
+  set.seed(4)
+  fit_n <- boot.lasso.proj(d$x, d$y, B = 20, boot.shortcut = TRUE, robust = TRUE, wild = TRUE,
+                           robust.divisor = "n")
+  expect_true(any(grepl("robust (divisor n) standard errors", capture.output(print(fit_n)),
+                        fixed = TRUE)))
 })

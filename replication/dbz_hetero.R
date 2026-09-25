@@ -51,14 +51,17 @@ boot_specs <- list(
   wild_m = list(type = "wild", mult = "mammen", robust = TRUE, wy = TRUE),
   xyz = list(type = "xyz", mult = NULL, robust = TRUE, wy = TRUE))
 
+# robust.divisor = "n" (hdi's divisor, the default when the stored results were
+# computed) keeps them reproducible now that the default is "n-s".
 fit_boot <- function(spec, y) {
   mc <- if (spec$wy) "WY" else "none"
   dbz_quiet(if (spec$type == "wild") {
     boot.lasso.proj(X, y, Z = Z, B = B, boot.type = "wild", multiplier = spec$mult,
-                    robust = spec$robust, multiplecorr.method = mc, return.bootdist = TRUE)
+                    robust = spec$robust, robust.divisor = "n", multiplecorr.method = mc,
+                    return.bootdist = TRUE)
   } else {
     boot.lasso.proj(X, y, Z = Z, B = B, boot.type = spec$type, robust = spec$robust,
-                    multiplecorr.method = mc, return.bootdist = TRUE)
+                    robust.divisor = "n", multiplecorr.method = mc, return.bootdist = TRUE)
   })
 }
 
@@ -72,7 +75,8 @@ boot_result <- function(spec, y) {
 }
 
 orig_result <- function(robust, y) {
-  fo <- lasso.proj(X, y, Z = Z, robust = robust, suppress.grouptesting = TRUE)
+  fo <- lasso.proj(X, y, Z = Z, robust = robust, robust.divisor = "n",
+                   suppress.grouptesting = TRUE)
   list(cover = dbz_covers(confint(fo, level = level), 0), holm_any = any(fo$pval.corr <= alpha))
 }
 

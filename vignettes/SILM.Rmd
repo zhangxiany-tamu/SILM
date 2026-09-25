@@ -135,8 +135,10 @@ same numbers under the same random seed):
   `ST()`, `legacy = TRUE` also restores three behaviours of SILM 1.0.0 that
   were corrected (see `?ST`).
 * `lasso.proj()`, `boot.lasso.proj()`: identical to hdi 0.1-10, except for
-  `lasso.proj(family = "binomial")`, where hdi's results need
-  `legacy = TRUE`.
+  `robust = TRUE`, where hdi's results need `robust.divisor = "n"` (the
+  default `"n-s"` is equation (5) of Dezeure, Bühlmann and Zhang (2017),
+  chosen by a pre-registered simulation study; see `?lasso.proj`), and
+  `lasso.proj(family = "binomial")`, where they need `legacy = TRUE`.
 * Results computed with R < 3.6.0 used a different random sampling
   algorithm: call `RNGkind(sample.kind = "Rounding")` before `set.seed()`.
 

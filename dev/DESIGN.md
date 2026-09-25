@@ -6,7 +6,8 @@
 
 1. `SR`, `ST`, `Sim.CI` and `Step`, kept faithful to 1.0.0 with fixes. The nodewise tuning is now explicit and defaults to `"ZnZ"`, chosen by the pre-registered defaults study (`validation/calibration/DEFAULTS.md`).
 2. `lasso.proj` and `boot.lasso.proj`, exact ports of hdi 0.1-10. Under `set.seed` they return the same numbers and leave the same `.Random.seed`.
-3. The Dezeure–Bühlmann–Zhang (2017, "DBZ") methods that hdi never shipped: simultaneous CIs (eq. 10), group p-values P_G, Mammen multipliers and the xyz-paired bootstrap.
+   - With `robust = TRUE`, this holds with `robust.divisor = "n"` (hdi's normalisation); the default is `"n-s"` (item 3).
+3. The Dezeure–Bühlmann–Zhang (2017, "DBZ") methods that hdi never shipped: simultaneous CIs (eq. 10), group p-values P_G, Mammen multipliers, the xyz-paired bootstrap, and the n − ŝ divisor of the robust s.e. (eq. 5). The divisor is the default (`robust.divisor = "n-s"`, chosen by the defaults study), so with `robust = TRUE` the ports of item 2 equal hdi only with `robust.divisor = "n"`.
 4. A four-layer verification stack:
    - a live side-by-side harness against the archived CRAN packages;
    - fixture tests;
@@ -34,7 +35,8 @@ Exception: where both options are compatible with the paper, or the old behaviou
 | Step when every hypothesis is rejected | Wasted pass and up to 2M warnings; results correct | Cosmetic | Guard with RNG burn (identical results and seed) | n/a |
 | ST empty lasso set; ST k < 0; `drop` bug; constant columns; bad inputs | Errors | Error path only | Fixed or informative error | n/a |
 | hdi `parallel=TRUE` (fold draws in forks) | Not reproducible | Bug | Pre-drawn fold ids, identical to hdi's sequential run | n/a |
-| Documented hdi quirks: type-7 confint quirk, df n−ŝ−1, 1/n robust s.e., homoscedastic WY covariance, (2c+1)/(B+1), shortcut interpolation, numeric-betainit scale, user-σ asymmetry | — | Not bugs, or paper-compatible | hdi behaviour, documented; warnings on the traps | — |
+| Robust s.e. divisor in lasso.proj/boot.lasso.proj (`robust = TRUE`) | 1/n (hdi; DBZ Sec 3.3.2) | Paper-compatible either way (DBZ eq. 5 uses n − ŝ); default decided by empirical performance (defaults study, `validation/calibration/DEFAULTS.md`, TODO-DEFAULTS-NUMBERS) | `robust.divisor = "n-s"` (eq. 5, original and bootstrap s.e.) | `robust.divisor = "n"` (= hdi 0.1-10) |
+| Documented hdi quirks: type-7 confint quirk, df n−ŝ−1, homoscedastic WY covariance, (2c+1)/(B+1), shortcut interpolation, numeric-betainit scale, user-σ asymmetry | — | Not bugs, or paper-compatible | hdi behaviour, documented; warnings on the traps | — |
 
 **Resolved decisions (2026-09-24):**
 1. `center = FALSE` is the default for SR/ST/Sim.CI/Step, with a calibrated one-time warning on clearly uncentred data. `center = TRUE` is opt-in.
@@ -542,6 +544,8 @@ It returns `invisible(x)`.
    - unname the columns of `cboot.dist` and `cboot.dist.underH0c` (hdi's `mcmapply` USE.NAMES artefact).
    
    Nothing else is normalized. SILM core outputs are compared raw.
+
+   The SILM side of every hdi scenario (groups C and D) is called with `robust.divisor = "n"` (hdi's normalisation) unless the scenario sets it (`validation/scenarios/hdi.R`, including the first call that computes `Z` for the `Z`-supplied configurations); SILM's default is `"n-s"`.
 6. **Status per scenario:**
    - `E0`: `identical(norm(old), norm(new))` and `identical(seed_old, seed_new)`;
    - `E1`: `all.equal(tol = 1e-12)` only, which is a FAIL on default paths;
@@ -643,7 +647,7 @@ Configurations:
 15. `gaussian.stub` with holm
 16. `sigma` supplied
 17. new `parallel = TRUE` with `ncores` ∈ {2, 4} vs old sequential (must be E0)
-18. new arguments passed explicitly at their defaults
+18. new arguments passed explicitly at their defaults (`robust.divisor` is hdi's `"n"`, as in every C and D scenario; see step 5)
 19. `boot.H0c = TRUE` with holm (`pval` and `pval.corr` identical; seed ALLOWED)
 20. `wild` with `boot.type = "wild"` explicit
 21. shortcut-fallback trigger (n = 15, p = 30, best effort)
@@ -673,6 +677,7 @@ It writes `tests/testthat/fixtures/<id>.rds = list(input_spec, seed, value, seed
 - If the platform fingerprint (R x.y, glmnet, lars, BLAS, architecture) matches the fixture, use `expect_identical` on everything, including `seed_after`.
 - Otherwise use `expect_equal(tolerance = 1e-8)` on continuous fields and `expect_identical` on discrete fields (index sets, decisions, count-based p-values) and on `seed_after`.
 - All fixture tests use `skip_on_cran()`. Structural and property tests run everywhere.
+- The lasso.proj and boot.lasso.proj fixtures are run with `robust.divisor = "n"` (hdi's) unless the fixture's `new_args` sets it (`tests/testthat/helper-fixtures.R`).
 
 **Workflows:**
 - `.github/workflows/r.yml`: KDist's matrix (Ubuntu release and devel, macOS, Windows) with `error-on: '"warning"'` and `NOT_CRAN: true`. Two extra jobs:
@@ -858,12 +863,13 @@ Target: 80% or more coverage, measured with `Rscript -e 'covr::percent_coverage(
   - the classes;
   - that `suppress.grouptesting` now only controls the RNG burn;
   - the binomial fix and `legacy`;
-  - the documented quirks (numeric betainit scale, user σ, df n−ŝ−1, type-7 confint, 1/n robust s.e., homoscedastic WY covariance, `standardize = FALSE` caveat, `cboot.dist.underH0c` naming).
+  - the robust-s.e. divisor: n − ŝ by default (`robust.divisor = "n-s"`, DBZ eq. 5); `robust.divisor = "n"` reproduces hdi;
+  - the documented quirks (numeric betainit scale, user σ, df n−ŝ−1, type-7 confint, homoscedastic WY covariance, `standardize = FALSE` caveat, `cboot.dist.underH0c` naming).
 - **`\section{SILM additions (not in hdi)}`** covers `boot.type`, `multiplier`, `boot.H0c`, `groups`, simultaneous confint and `groupTest`, the validity table (DBZ Theorems 1–3), and the recommendation `robust = TRUE` with `wild = TRUE`.
 
 **Vignette (`vignettes/SILM.Rmd`, under 30 s to build):**
 1. Zhang & Cheng methods (SR, Sim.CI, Step, ST, and `Theta.hat` reuse).
-2. hdi-compatible lasso.proj and boot.lasso.proj.
+2. hdi-compatible lasso.proj and boot.lasso.proj (hdi's robust s.e. with `robust.divisor = "n"`).
 3. DBZ additions: simultaneous CIs, P_G, Mammen, xyz.
 4. Reproducing old results (`nodewise = "cv"` for SILM 1.0.0 with hdi 0.1-6, `legacy = TRUE`, RNGkind).
 5. The relation between Sim.CI (the "ZC approach", which bootstraps only the linear part) and boot.lasso.proj.
@@ -954,6 +960,8 @@ Research inputs:
 ---
 
 # Appendices (research record, 2026-09-23/24)
+
+*Superseded where they conflict with decision 6:* the robust-s.e. default is now `robust.divisor = "n-s"` (applied to the original, bootstrap and xyz standard errors); hdi's 1/n, which the appendices recommend keeping as the default, is `robust.divisor = "n"`.
 
 These appendices hold the verified findings behind the plan. Sources: hdi 0.1-10 and SILM 1.0.0 (CRAN archive), Dezeure, Bühlmann & Zhang (2017, TEST) and Zhang & Cheng (2017, JASA; arXiv:1603.01295).
 

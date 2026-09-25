@@ -3,7 +3,10 @@
 # Both sides return the hdi fields (without `call`, hdi's group-test closures
 # and SILM's additional fields) plus confint() output, so that identical()
 # compares exactly the results hdi produced. hdi's bootstrap matrices carry
-# meaningless column names (an artefact of mcmapply); they are removed.
+# meaningless column names (an artefact of mcmapply); they are removed. The
+# SILM side is called with hdi's robust.divisor = "n" (SILM's default is
+# "n-s") unless a scenario sets it, in the main call and in the first call
+# that computes Z for the Z_from scenarios.
 
 hdi_fields <- c("pval", "pval.corr", "sigmahat", "standardize", "sds", "bhat", "se", "betahat",
                 "family", "method", "B", "boot.shortcut", "lambda", "Z", "cboot.dist",
@@ -39,10 +42,19 @@ run_proj <- function(pkg, d, a) {
   args <- c(list(d$x, y), call)
   if (!is.null(a$Z_from)) {
     # Z computed by a first call with return.Z = TRUE (same package).
-    zfit <- do.call(fun, c(list(d$x, y), a$Z_from, list(return.Z = TRUE)))
+    zargs <- a$Z_from
+    if (pkg == "SILM" && is.null(zargs$robust.divisor)) zargs$robust.divisor <- "n"
+    zfit <- do.call(fun, c(list(d$x, y), zargs, list(return.Z = TRUE)))
     args$Z <- zfit$Z
   }
-  if (pkg == "SILM") args <- c(args, a$new_args)
+  if (pkg == "SILM") {
+    # SILM's default robust.divisor is "n-s" (equation 5 of Dezeure, Buehlmann
+    # and Zhang, 2017); hdi divided by n. Pass "n" unless the scenario sets it,
+    # so that every scenario stays an exact comparison with hdi.
+    new_args <- a$new_args
+    if (is.null(new_args$robust.divisor)) new_args$robust.divisor <- "n"
+    args <- c(args, new_args)
+  }
   fit <- do.call(fun, args)
   extract_hdi_fit(fit, a)
 }
@@ -154,6 +166,8 @@ boot_configs <- function(B) {
     D("parallel-2-shortcut", list(parallel = TRUE, ncores = 2, boot.shortcut = TRUE)),
     D("rng-3.5.0", list(), rng = "3.5.0"),
     # SILM arguments passed explicitly at their defaults: must be identical.
+    # (robust.divisor is set to hdi's "n" by run_proj; it has no effect with
+    # robust = FALSE.)
     D("new-args-at-defaults", new_args = list(boot.type = "residual", multiplier = "gaussian",
                                               boot.H0c = TRUE, groups = list(1:3))),
     D("wild-via-boot.type", list(wild = TRUE), new_args = list(boot.type = "wild")),

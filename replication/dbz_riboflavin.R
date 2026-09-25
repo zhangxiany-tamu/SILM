@@ -76,7 +76,9 @@ wy_pequiv <- function(fb) {
 # ---------------------------------------------------------------------------
 real_rep <- function(r) {
   fo <- lasso.proj(x, y, Z = Z, suppress.grouptesting = TRUE)
-  fr <- lasso.proj(x, y, Z = Z, robust = TRUE, suppress.grouptesting = TRUE)
+  # robust.divisor = "n": hdi's divisor, the default when the stored results
+  # were computed (the default is now "n-s").
+  fr <- lasso.proj(x, y, Z = Z, robust = TRUE, robust.divisor = "n", suppress.grouptesting = TRUE)
   fb <- boot_fit(y, B)
   fs <- boot_fit(y, B, shortcut = TRUE)
   pe <- wy_pequiv(fb)

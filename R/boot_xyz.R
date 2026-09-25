@@ -46,7 +46,7 @@
 # Studentized statistics of one xyz bootstrap sample (NA if the sample has to
 # be discarded).
 .xyz_draw <- function(rows, hats, yvec, truth, betainit, lambda, robust, foldid = NULL,
-                      divisor = "n") {
+                      divisor) {
   n <- length(rows)
   # The folds are drawn first, so that the random number stream does not
   # depend on which samples are discarded (parallel runs pre-draw them).
@@ -79,7 +79,7 @@
 # p x B matrix of studentized statistics over the bootstrap samples in `index`
 # (NA columns for discarded samples). Folds are handled by .boot_map().
 .xyz_cbootdist <- function(hats, index, yvec, truth, betainit, lambda, robust, parallel,
-                           ncores, divisor = "n") {
+                           ncores, divisor) {
   draw_one <- function(b, foldid = NULL) {
     .xyz_draw(index[, b], hats, yvec, truth, betainit, lambda, robust, foldid, divisor)
   }

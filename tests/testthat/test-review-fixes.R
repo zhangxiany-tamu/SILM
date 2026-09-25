@@ -101,8 +101,8 @@ test_that("xyz: the sign of a normaliser does not matter; folds follow original 
   h_neg <- h
   h_neg$zhat[, 2] <- -h_neg$zhat[, 2]
   rows <- sample.int(n, n, TRUE)
-  a <- SILM:::.xyz_draw(rows, h, h$yhat, beta, "scaled lasso", NULL, TRUE)
-  b <- SILM:::.xyz_draw(rows, h_neg, h_neg$yhat, beta, "scaled lasso", NULL, TRUE)
+  a <- SILM:::.xyz_draw(rows, h, h$yhat, beta, "scaled lasso", NULL, TRUE, divisor = "n")
+  b <- SILM:::.xyz_draw(rows, h_neg, h_neg$yhat, beta, "scaled lasso", NULL, TRUE, divisor = "n")
   expect_equal(a$T, b$T, tolerance = 1e-12)
   f <- SILM:::.xyz_foldid(rows)
   expect_true(all(tapply(f, rows, function(v) length(unique(v))) == 1))
@@ -123,7 +123,7 @@ test_that("non-finite or degenerate Z, sigma and betainit are rejected", {
   expect_error(boot.lasso.proj(x, y, B = 10, sigma = Inf), "positive finite")
 })
 
-test_that("robust.divisor = \"n-s\" applies equation (5) of Dezeure, Buehlmann and Zhang", {
+test_that("the default robust.divisor \"n-s\" applies equation (5) of Dezeure, Buehlmann and Zhang", {
   withr::local_seed(57)
   x <- matrix(rnorm(60 * 12), 60, 12)
   y <- x[, 1:2] %*% c(1, -1) + rnorm(60)
@@ -131,18 +131,71 @@ test_that("robust.divisor = \"n-s\" applies equation (5) of Dezeure, Buehlmann a
     set.seed(4)
     lasso.proj(x, y, robust = TRUE, suppress.grouptesting = TRUE, return.Z = TRUE, ...)
   }
-  a <- fit()
-  b <- fit(robust.divisor = "n-s")
+  a <- fit(robust.divisor = "n")
+  b <- fit()
+  b_given <- fit(robust.divisor = "n-s")
   expect_identical(a$robust.divisor, "n")
   expect_identical(b$robust.divisor, "n-s")
+  b$call <- b_given$call <- NULL
+  expect_identical(b, b_given)
+  for (f in list(lasso.proj, boot.lasso.proj)) {
+    expect_identical(eval(formals(f)$robust.divisor), c("n-s", "n"))
+  }
   s <- sum(a$betahat != 0)
   expect_gt(s, 0)
   expect_equal(b$se, a$se * sqrt(60 / (60 - s)))
   expect_identical(a$bhat, b$bhat)
   expect_true(all(b$pval >= a$pval))
-  expect_warning(lasso.proj(x, y, robust.divisor = "n-s", suppress.grouptesting = TRUE),
-                 "only used with robust = TRUE")
   expect_error(lasso.proj(x, y, robust = TRUE, robust.divisor = "df"), "should be one of")
+})
+
+test_that("\"n-s\" needs fewer non-zero entries of a numeric betainit than observations", {
+  withr::local_seed(60)
+  x <- matrix(rnorm(30 * 40), 30, 40)
+  y <- x[, 1] + rnorm(30)
+  Z <- lasso.proj(x, y, standardize = FALSE, return.Z = TRUE, suppress.grouptesting = TRUE)$Z
+  lp <- function(...) {
+    lasso.proj(x, y, Z = Z, betainit = rep(0.01, 40), sigma = 1, robust = TRUE,
+               standardize = FALSE, suppress.grouptesting = TRUE, ...)
+  }
+  # s_hat = 40 >= n = 30: checked before the nodewise lasso, and the message
+  # says "(the default)" only when robust.divisor was not given.
+  err <- expect_error(lp(), "\\(the default\\) divides by n - s, where s = 40")
+  expect_match(conditionMessage(err), "robust.divisor = \"n\"", fixed = TRUE)
+  err_given <- expect_error(lp(robust.divisor = "n-s"), "s = 40")
+  expect_false(grepl("the default", conditionMessage(err_given), fixed = TRUE))
+  # hdi's normalisation has no such restriction.
+  fit <- suppressWarnings(lp(robust.divisor = "n"))
+  expect_true(all(is.finite(fit$se)))
+  # A sparse numeric betainit works with the default.
+  b <- c(0.9, rep(0, 39))
+  a <- suppressWarnings(lasso.proj(x, y, Z = Z, betainit = b, sigma = 1, robust = TRUE,
+                                   standardize = FALSE, suppress.grouptesting = TRUE))
+  a_n <- suppressWarnings(lasso.proj(x, y, Z = Z, betainit = b, sigma = 1, robust = TRUE,
+                                     standardize = FALSE, suppress.grouptesting = TRUE,
+                                     robust.divisor = "n"))
+  expect_equal(a$se, a_n$se * sqrt(30 / 29))
+})
+
+test_that("robust.divisor warns only when \"n-s\" is given with robust = FALSE", {
+  withr::local_seed(59)
+  x <- matrix(rnorm(40 * 10), 40, 10)
+  y <- x[, 1] + rnorm(40)
+  lp <- function(...) {
+    set.seed(1)
+    lasso.proj(x, y, suppress.grouptesting = TRUE, ...)
+  }
+  expect_warning(lp(robust.divisor = "n-s"), "only used with robust = TRUE")
+  expect_no_warning(a <- lp())
+  expect_no_warning(b <- lp(robust.divisor = "n"))
+  # Without robust = TRUE the divisor has no effect.
+  expect_identical(a$se, b$se)
+  expect_identical(a$pval, b$pval)
+  bp <- function(...) boot.lasso.proj(x, y, B = 10, boot.shortcut = TRUE, ...)
+  expect_warning(bp(robust.divisor = "n-s"), "only used with robust = TRUE")
+  expect_no_warning(bp())
+  expect_no_warning(bp(robust.divisor = "n"))
+  expect_no_warning(bp(robust = TRUE, robust.divisor = "n-s"))
 })
 
 test_that("robust.divisor rescales the bootstrap standard errors consistently", {

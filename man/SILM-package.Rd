@@ -36,7 +36,10 @@ Mammen multipliers, or xyz-paired bootstrap), with robust standard errors:
 
 \code{\link[=lasso.proj]{lasso.proj()}} computes the de-sparsified lasso with asymptotic Gaussian
 inference (van de Geer et al., 2014). \code{lasso.proj()} and \code{boot.lasso.proj()}
-reproduce the functions of the archived package 'hdi' (version 0.1-10).
+are ports of the functions of the archived package 'hdi' (version 0.1-10).
+With \code{robust = TRUE} they use the \eqn{n - \hat s}{n - s} divisor of
+equation (5) of Dezeure, Bühlmann and Zhang (2017) by default;
+\code{robust.divisor = "n"} gives hdi's results.
 }
 
 \section{Reproducibility}{

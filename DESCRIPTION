@@ -22,12 +22,12 @@ Description: Simultaneous inference for high-dimensional linear models based
     <doi:10.1007/s11749-017-0554-2> with residual, wild and xyz-paired
     bootstrap, Westfall-Young multiple testing, simultaneous confidence
     intervals and group tests. Includes lasso.proj() and boot.lasso.proj(),
-    which reproduce the corresponding functions of the archived 'hdi' package,
-    and a scaled lasso following Sun and Zhang (2012)
-    <doi:10.1093/biomet/ass043>.
+    ports of the corresponding functions of the archived 'hdi' package (hdi's
+    results can be reproduced exactly through their arguments), and a scaled
+    lasso following Sun and Zhang (2012) <doi:10.1093/biomet/ass043>.
 Depends: R (>= 4.1.0)
 Imports: glmnet (>= 4.1), lars, MASS, parallel, stats, utils
-Suggests: knitr, rmarkdown, testthat (>= 3.0.0), withr
+Suggests: knitr, rmarkdown, testthat (>= 3.1.5), withr
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 License: GPL-3

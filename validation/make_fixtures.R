@@ -20,6 +20,8 @@ d_wide <- sim(50, 40, 3, 102)    # p > n/2: nodewise lasso
 
 # Each fixture: SILM function, data, arguments (shared by old and new code) and
 # SILM-only arguments for the new code. `mode` selects the archived hdi.
+# lasso.proj/boot.lasso.proj fixtures are compared with robust.divisor = "n"
+# (hdi's), which tests/testthat/helper-fixtures.R adds unless new_args sets it.
 core <- list()
 for (mode in c("cv", "znz")) {
   new_nw <- list(nodewise = if (mode == "cv") "cv" else "ZnZ")

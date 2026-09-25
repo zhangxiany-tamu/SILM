@@ -75,8 +75,13 @@ which were available only in the archived 'hdi'.
 ## New features
 
 * `lasso.proj()` and `boot.lasso.proj()`: ports of the archived
-  `hdi::lasso.proj()` and `hdi::boot.lasso.proj()` (same arguments, defaults
-  and results under the same seed), with `print()` and `confint()` methods.
+  `hdi::lasso.proj()` and `hdi::boot.lasso.proj()` (same arguments and
+  defaults, and the same results under the same seed except as listed here),
+  with `print()` and `confint()` methods.
+  * With `robust = TRUE`, the robust standard errors use the n - s divisor of
+    equation (5) of Dezeure, Bühlmann and Zhang (2017) by default (see
+    `robust.divisor` below), so the results differ from hdi's;
+    `robust.divisor = "n"` reproduces hdi.
   * `boot.lasso.proj(parallel = TRUE)` is now reproducible, and identical to the
     sequential computation; hdi's parallel results depended on worker random
     streams.
@@ -92,7 +97,13 @@ which were available only in the archived 'hdi'.
   * the xyz-paired bootstrap (`boot.type = "xyz"`);
   * the n - s divisor of the robust standard error in equation (5)
     (`robust.divisor = "n-s"`), applied to the original and all bootstrap
-    standard errors. The default `"n"` is hdi's.
+    standard errors. It is the default, chosen by a pre-registered study
+    (`validation/calibration/DEFAULTS.md`; results in
+    `validation/calibration/defaults-results/REPORT.md`) under its fixed
+    decision rule (calibration first, then power): TODO-DEFAULTS-NUMBERS
+    (which metric decided and by how much). `robust.divisor = "n"` is hdi's
+    normalisation (Section 3.3.2 of the paper) and reproduces hdi. With a
+    numeric `betainit`, `"n-s"` needs fewer than n non-zero entries.
 * `Theta.hat()` returns the matrix Theta used by `SR()`, `Sim.CI()` and
   `Step()`, and these functions accept a precomputed `Theta`.
 * `center = TRUE` centres the data; by default the data are used as given (as

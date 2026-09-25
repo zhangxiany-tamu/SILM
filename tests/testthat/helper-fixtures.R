@@ -13,8 +13,12 @@ run_fixture <- function(fx) {
   set.seed(20260924)
   fun <- getExportedValue("SILM", fx$fun)
   if (fx$fun %in% c("lasso.proj", "boot.lasso.proj")) {
+    # hdi divided the robust standard error by n; SILM's default
+    # robust.divisor is "n-s" (equation 5 of Dezeure, Buehlmann and Zhang).
+    new_args <- fx$new_args
+    if (is.null(new_args$robust.divisor)) new_args$robust.divisor <- "n"
     fit <- suppressWarnings(suppressMessages(do.call(fun, c(list(fx$data$x, fx$data$y), fx$args,
-                                                            fx$new_args))))
+                                                            new_args))))
     keep <- intersect(names(fit), c("pval", "pval.corr", "sigmahat", "sds", "bhat", "se",
                                     "betahat", "lambda", "cboot.dist", "cboot.dist.underH0c"))
     val <- unclass(fit)[keep]

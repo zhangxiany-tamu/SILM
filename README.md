@@ -29,7 +29,7 @@ nodewise lasso used by SILM and the only implementation of Dezeure, Bühlmann
 and Zhang (2017), was archived on the same day. SILM 2.0.0 is self-contained
 (it depends only on 'glmnet', 'lars' and 'MASS') and takes over
 `lasso.proj()` and `boot.lasso.proj()` from hdi, with the same arguments and
-results.
+(up to the differences listed under "Coming from hdi") the same results.
 
 ## Installation
 
@@ -74,15 +74,22 @@ See `vignette("SILM")` for a guided tour.
 ## Coming from hdi
 
 `lasso.proj()` and `boot.lasso.proj()` accept the same arguments as in hdi
-0.1-10 and return the same numbers under the same random seed, so replacing
-`hdi::` by `SILM::` is enough. The differences:
+0.1-10 and, for the Gaussian family with the default `robust = FALSE`, return
+the same numbers under the same random seed, so replacing `hdi::` by `SILM::`
+is enough. With `robust = TRUE`, the robust standard errors use the n - s
+divisor of equation (5) of Dezeure, Bühlmann and Zhang (2017) by default,
+chosen by a pre-registered study under its fixed decision rule (calibration
+first, then power): TODO-DEFAULTS-NUMBERS (which metric decided and by how
+much; `validation/calibration/defaults-results/REPORT.md`); add
+`robust.divisor = "n"` to get hdi's numbers. The differences:
 
 | | hdi 0.1-10 | SILM 2.0.0 |
 |---|---|---|
 | result class | `"hdi"` | `"silm_lasso_proj"` / `"silm_boot_lasso_proj"` (with `print`, `confint`) |
+| robust standard error (`robust = TRUE`) | divisor n (Section 3.3.2) | divisor n - s, equation (5) (`robust.divisor = "n-s"`, default); `robust.divisor = "n"` gives hdi's result |
 | `lasso.proj()` group tests (`groupTest`, `clusterGroupTest` closures) | yes | not provided (`NULL`); use `boot.lasso.proj()` + `groupTest()` |
 | `boot.lasso.proj(parallel = TRUE)` | not reproducible | reproducible, identical to the sequential result |
-| `lasso.proj(family = "binomial")` | biased intercept removal | corrected; `legacy = TRUE` gives hdi's result |
+| `lasso.proj(family = "binomial")` | biased intercept removal | corrected; `legacy = TRUE` gives hdi's result (with `robust = TRUE`, also set `robust.divisor = "n"`) |
 | simultaneous CIs, group tests, Mammen multipliers, xyz-paired bootstrap | no | yes (see `?boot.lasso.proj`) |
 
 ## Reproducibility and correctness

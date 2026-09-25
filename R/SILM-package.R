@@ -23,7 +23,10 @@
 #'
 #' [lasso.proj()] computes the de-sparsified lasso with asymptotic Gaussian
 #' inference (van de Geer et al., 2014). `lasso.proj()` and `boot.lasso.proj()`
-#' reproduce the functions of the archived package 'hdi' (version 0.1-10).
+#' are ports of the functions of the archived package 'hdi' (version 0.1-10).
+#' With `robust = TRUE` they use the \eqn{n - \hat s}{n - s} divisor of
+#' equation (5) of Dezeure, Bühlmann and Zhang (2017) by default;
+#' `robust.divisor = "n"` gives hdi's results.
 #'
 #' @section Reproducibility:
 #' SILM 2.0.0 reproduces SILM 1.0.0 and hdi 0.1-10 exactly (the same numbers

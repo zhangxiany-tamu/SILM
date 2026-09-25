@@ -43,8 +43,14 @@ Individual or simultaneous confidence intervals for the coefficients.
 \details{
 \strong{Individual intervals} (\code{type = "individual"}) come from the asymptotic
 Gaussian distribution for \code{\link[=lasso.proj]{lasso.proj()}} and from the bootstrap
-distribution for \code{\link[=boot.lasso.proj]{boot.lasso.proj()}} (which requires \code{return.bootdist = TRUE}); they are identical to those of the archived 'hdi' package. For the
-bootstrap, the interval for \eqn{\beta_j} is
+distribution for \code{\link[=boot.lasso.proj]{boot.lasso.proj()}} (which requires \code{return.bootdist = TRUE}); they are identical to those of the archived 'hdi' package when the
+fit used hdi's standard errors (\code{robust = FALSE}, or \code{robust = TRUE} with
+\code{robust.divisor = "n"}). With the default \code{robust.divisor = "n-s"}, the
+robust intervals differ from hdi's: those of \code{\link[=lasso.proj]{lasso.proj()}} are wider by
+the factor \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))}, and the bootstrap
+intervals change because \eqn{\hat{s.e.}_j}{se_j} and every
+\eqn{\hat{s.e.}^*_j}{se*_j} are rescaled. For the bootstrap, the interval
+for \eqn{\beta_j} is
 \eqn{[\hat b_j - q^*_{j;1-\alpha/2}, \hat b_j - q^*_{j;\alpha/2}]}{[b_j - q*_j(1 - a/2), b_j - q*_j(a/2)]},
 where \eqn{q^*_{j;\nu}}{q*_j(nu)} are quantiles of the bootstrap distribution
 of \eqn{\hat{s.e.}_j T^*_j}{se_j T*_j} (Dezeure, Bühlmann and Zhang, 2017,

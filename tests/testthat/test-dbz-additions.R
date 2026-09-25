@@ -52,7 +52,8 @@ test_that("xyz hat construction makes the bootstrap errors orthogonal", {
   expect_equal(h$yhat - as.vector(h$xhat %*% beta), e)
   # With all rows (identity resample) and the lasso refit at beta, the
   # de-sparsified estimate equals beta up to the refit: T* is its deviation.
-  draw <- SILM:::.xyz_draw(seq_len(60), h, h$yhat, beta, "scaled lasso", NULL, TRUE)
+  draw <- SILM:::.xyz_draw(seq_len(60), h, h$yhat, beta, "scaled lasso", NULL, TRUE,
+                           divisor = "n")
   expect_length(draw$T, 12)
   expect_true(all(is.finite(draw$T)))
 })

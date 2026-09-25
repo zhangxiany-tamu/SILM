@@ -2,7 +2,8 @@
 #
 # Port of hdi 0.1-10 R/lasso-proj.R (Ruben Dezeure; GPL, see
 # inst/COPYRIGHTS). Results are identical to hdi::lasso.proj() under the same
-# random seed (see the section "Compatibility with hdi 0.1-10").
+# random seed, with robust.divisor = "n" when robust = TRUE (see the section
+# "Compatibility with hdi 0.1-10").
 
 #' P-values and confidence intervals based on the de-sparsified lasso
 #'
@@ -10,8 +11,10 @@
 #' and Zhang and Zhang (2014), individual p-values based on its asymptotic
 #' Gaussian distribution, and p-values adjusted for multiple testing. This is
 #' a port of `lasso.proj()` from the archived package 'hdi' (version 0.1-10)
-#' and has the same arguments and defaults. Confidence intervals are obtained
-#' with [confint()][confint.silm_proj].
+#' and has the same arguments and defaults, plus a few additions; the results
+#' differ from hdi's only where the section "Compatibility with hdi 0.1-10"
+#' says so. Confidence intervals are obtained with
+#' [confint()][confint.silm_proj].
 #'
 #' The columns of `x` are centred (and scaled if `standardize = TRUE`) and `y`
 #' is centred, so the model may contain an intercept. The nodewise lasso that
@@ -21,12 +24,20 @@
 #' (IRLS) working model of a logistic lasso fit, as in hdi.
 #'
 #' @section Compatibility with hdi 0.1-10:
-#' For the same data, arguments and random seed, `lasso.proj()` returns the
-#' same `pval`, `pval.corr`, `bhat`, `se`, `betahat` and `sigmahat` as
-#' `hdi::lasso.proj()` and leaves the random number generator in the same
-#' state; this is verified against the archived hdi package (with the same
-#' version of glmnet; `multiplecorr.method = "WY"` also depends on the
-#' BLAS/LAPACK used by `MASS::mvrnorm()`). The differences are:
+#' For the same data, arguments and random seed (and `robust.divisor = "n"`
+#' if `robust = TRUE`), `lasso.proj()` returns the same `pval`, `pval.corr`,
+#' `bhat`, `se`, `betahat` and `sigmahat` as `hdi::lasso.proj()` and leaves
+#' the random number generator in the same state; this is verified against
+#' the archived hdi package (with the same version of glmnet;
+#' `multiplecorr.method = "WY"` also depends on the BLAS/LAPACK used by
+#' `MASS::mvrnorm()`). The differences are:
+#' * `robust = TRUE`: the robust standard error uses the divisor
+#'   \eqn{n - \hat s}{n - s} of equation (5) of Dezeure, Bühlmann and Zhang
+#'   (2017) by default (`robust.divisor = "n-s"`), so its standard errors are
+#'   larger by the factor \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))} and
+#'   its p-values are at least as large as hdi's. hdi divided by n (Section
+#'   3.3.2 of the paper); `robust.divisor = "n"` reproduces hdi exactly.
+#'   Results with `robust = FALSE` (the default) are not affected.
 #' * The result has class `c("silm_lasso_proj", "silm_proj")` instead of
 #'   `"hdi"`, and the elements `groupTest` and `clusterGroupTest` (functions
 #'   for group tests in hdi) are `NULL`: those tests are not provided. The
@@ -66,7 +77,9 @@
 #' @param betainit Initial estimator: `"cv lasso"` (default; lasso with
 #'   lambda.1se from 10-fold cross-validation), `"scaled lasso"`, or a numeric
 #'   vector of coefficients for the centred (and scaled) design, which requires
-#'   `sigma`.
+#'   `sigma`. With `robust = TRUE` and the default `robust.divisor = "n-s"`, a
+#'   numeric `betainit` must have fewer than n non-zero entries (see
+#'   `robust.divisor`).
 #' @param sigma Optional noise standard deviation, overriding the estimate
 #'   (not used with `robust = TRUE`, whose standard errors do not involve it,
 #'   nor for `family = "binomial"`).
@@ -81,14 +94,27 @@
 #' @param robust Use the robust (sandwich) standard errors of Dezeure,
 #'   Bühlmann and Zhang (2017), valid under heteroscedastic errors.
 #' @param do.ZnZ Choose the nodewise tuning parameter with the Z&Z rule.
-#' @param legacy Reproduce hdi exactly for `family = "binomial"` (see the
-#'   section "Compatibility with hdi 0.1-10").
-#' @param robust.divisor Normalisation of the robust standard error:
-#'   `"n"` (default, as in hdi and Section 3.3.2 of Dezeure, Bühlmann and
-#'   Zhang, 2017) or `"n-s"`, equation (5) of that paper, which multiplies it
-#'   by \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))}, where \eqn{\hat s}{s} is
-#'   the number of variables selected by the initial lasso. Only used with
-#'   `robust = TRUE`.
+#' @param legacy Reproduce hdi exactly for `family = "binomial"` (with
+#'   `robust = TRUE`, also set `robust.divisor = "n"`; see the section
+#'   "Compatibility with hdi 0.1-10").
+#' @param robust.divisor Normalisation of the robust standard error, only
+#'   used with `robust = TRUE`: `"n-s"` (default) is equation (5) of
+#'   Dezeure, Bühlmann and Zhang (2017), which multiplies the standard error
+#'   with divisor n by \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))}, where
+#'   \eqn{\hat s}{s} is the number of variables selected by the initial
+#'   lasso (for a numeric `betainit`, its number of non-zero entries, which
+#'   must be smaller than n; p for a dense estimate); `"n"` is hdi's
+#'   normalisation (Section 3.3.2 of the paper), reproduces hdi and has no
+#'   such restriction. The default was chosen by a pre-registered study
+#'   that compared the two on the paper's simulation designs and a
+#'   heteroscedastic stress design (Gaussian linear models with lasso
+#'   initial fits), under a decision rule fixed in advance (calibration
+#'   first, then power): TODO-DEFAULTS-NUMBERS (which metric decided and by
+#'   how much; see `validation/calibration/DEFAULTS.md` and
+#'   `validation/calibration/defaults-results/REPORT.md` in the source
+#'   repository). In `lasso.proj()` it also applies to `family = "binomial"`
+#'   (the linearised model) and to a numeric `betainit`, which the study did
+#'   not cover.
 #' @return An object of class `c("silm_lasso_proj", "silm_proj")`: a list with
 #'   elements `pval` (individual p-values), `pval.corr` (adjusted p-values),
 #'   `groupTest` and `clusterGroupTest` (both `NULL`), `sigmahat`,
@@ -96,7 +122,9 @@
 #'   (de-sparsified lasso estimates), `se` (their standard errors), `betahat`
 #'   (initial estimate), `family`, `method` (`"lasso.proj"`), `call`, `Z` (if
 #'   `return.Z = TRUE`), and the SILM additions `robust`, `multiplecorr.method`,
-#'   `legacy` and `tstat` (the statistics `bhat / se` on the internal scale).
+#'   `legacy`, `robust.divisor` (the normalisation of the robust standard
+#'   errors; it has no effect when `robust = FALSE`) and `tstat` (the
+#'   statistics `bhat / se` on the internal scale).
 #' @references van de Geer, S., Bühlmann, P., Ritov, Y. and Dezeure, R. (2014).
 #'   On asymptotically optimal confidence regions and tests for
 #'   high-dimensional models. \emph{Annals of Statistics}, 42, 1166-1202.
@@ -125,8 +153,10 @@ lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                        ncores = getOption("mc.cores", 2L), betainit = "cv lasso",
                        sigma = NULL, Z = NULL, verbose = FALSE, return.Z = FALSE,
                        suppress.grouptesting = FALSE, robust = FALSE, do.ZnZ = FALSE,
-                       legacy = FALSE, robust.divisor = c("n", "n-s")) {
-  robust.divisor <- .check_divisor(robust.divisor, robust)
+                       legacy = FALSE, robust.divisor = c("n-s", "n")) {
+  # (missing() is unreliable once an argument has been modified.)
+  divisor_given <- !missing(robust.divisor)
+  robust.divisor <- .check_divisor(robust.divisor, robust, given = divisor_given)
   args <- .check_proj_args(x, y, family, standardize, multiplecorr.method, betainit, sigma, Z)
   x <- args$x
   y <- args$y
@@ -135,6 +165,7 @@ lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                              suppress.grouptesting = suppress.grouptesting, robust = robust,
                              do.ZnZ = do.ZnZ, legacy = legacy)
   for (nm in names(flags)) assign(nm, flags[[nm]])
+  .check_divisor_betainit(betainit, nrow(x), robust, robust.divisor, divisor_given)
   if (family == "binomial" && !is.null(sigma)) {
     warning("'sigma' is ignored for family = \"binomial\": the linearised model has unit ",
             "variance.", call. = FALSE)

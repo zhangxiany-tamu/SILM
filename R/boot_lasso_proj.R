@@ -3,7 +3,8 @@
 #
 # Port of hdi 0.1-10 R/boot.lasso-proj.R (Ruben Dezeure; GPL, see
 # inst/COPYRIGHTS). Results are identical to hdi::boot.lasso.proj() under the
-# same random seed (see the section "Compatibility with hdi 0.1-10").
+# same random seed, with robust.divisor = "n" when robust = TRUE (see the
+# section "Compatibility with hdi 0.1-10").
 
 #' Bootstrapped de-sparsified lasso: p-values and confidence intervals
 #'
@@ -12,7 +13,9 @@
 #' Westfall-Young max-T procedure, and bootstrap confidence intervals
 #' (Dezeure, Bühlmann and Zhang, 2017). This is a port of
 #' `boot.lasso.proj()` from the archived package 'hdi' (version 0.1-10) with
-#' the same arguments and defaults.
+#' the same arguments and defaults, plus the SILM additions below; the results
+#' differ from hdi's only where the section "Compatibility with hdi 0.1-10"
+#' says so.
 #'
 #' The residual bootstrap (default) resamples the centred lasso residuals; the
 #' wild bootstrap (`wild = TRUE`) multiplies them by independent standard
@@ -26,15 +29,28 @@
 #'
 #' The paper recommends the robust standard error (`robust = TRUE`) in
 #' practice, and the wild bootstrap under heteroscedastic errors. The default
-#' `robust = FALSE` is kept for compatibility with hdi.
+#' `robust = FALSE` is kept for compatibility with hdi. With `robust = TRUE`,
+#' the robust standard errors of the original and of every bootstrap fit use
+#' the divisor \eqn{n - \hat s}{n - s} of the paper's equation (5) by default
+#' (see `robust.divisor`).
 #'
 #' @section Compatibility with hdi 0.1-10:
-#' For the same data, arguments and random seed, `boot.lasso.proj()` returns
-#' the same `pval`, `pval.corr`, `bhat`, `se`, `betahat`, `sigmahat`, `lambda`
-#' and bootstrap distributions as `hdi::boot.lasso.proj()` run sequentially,
-#' and leaves the random number generator in the same state; this is verified
-#' against the archived hdi package (with the same version of glmnet). The
-#' differences are:
+#' For the same data, arguments and random seed (and `robust.divisor = "n"`
+#' if `robust = TRUE`), `boot.lasso.proj()` returns the same `pval`,
+#' `pval.corr`, `bhat`, `se`, `betahat`, `sigmahat`, `lambda` and bootstrap
+#' distributions as `hdi::boot.lasso.proj()` run sequentially, and leaves the
+#' random number generator in the same state; this is verified against the
+#' archived hdi package (with the same version of glmnet). The differences
+#' are:
+#' * `robust = TRUE`: the robust standard error of the original fit and of
+#'   every bootstrap fit uses the divisor \eqn{n - \hat s}{n - s} of equation
+#'   (5) of Dezeure, Bühlmann and Zhang (2017) by default
+#'   (`robust.divisor = "n-s"`, with \eqn{\hat s}{s} the size of the
+#'   respective lasso fit); hdi divided by n (Section 3.3.2 of the paper).
+#'   `se` and, through the studentized bootstrap statistics, the p-values and
+#'   bootstrap distributions differ from hdi's; `robust.divisor = "n"`
+#'   reproduces hdi exactly. Results with `robust = FALSE` (the default) are
+#'   not affected.
 #' * The result has class `c("silm_boot_lasso_proj", "silm_proj")` instead of
 #'   `"hdi"`, and additional elements (see Value).
 #' * With `parallel = TRUE`, hdi drew the cross-validation folds of the
@@ -49,19 +65,17 @@
 #' affects the standard errors of the original fit, not those of the
 #' bootstrap fits (a warning is given); `boot.shortcut` has no effect with
 #' `betainit = "scaled lasso"` (a warning is given) and uses glmnet's linear
-#' interpolation along its lambda path; the robust standard error uses the
-#' divisor n (Dezeure, Bühlmann and Zhang, 2017, Section 3.3.2; see
-#' `robust.divisor` for the n - s divisor of their equation 5); the
-#' individual p-values are (2 c + 1) / (B + 1), where c is the smaller of the
-#' two tail counts of the bootstrap distribution.
+#' interpolation along its lambda path; the individual p-values are
+#' (2 c + 1) / (B + 1), where c is the smaller of the two tail counts of the
+#' bootstrap distribution.
 #'
 #' @section SILM additions (not in hdi):
 #' * `boot.type = "wild"` with `multiplier = "mammen"`: the wild bootstrap
 #'   with Mammen's two-point multipliers (Section 4.1), which also match the
 #'   third moment of the errors. The paper found no advantage over Gaussian
 #'   multipliers; in our replication of its small heteroscedastic example
-#'   (n = 50) they under-covered (average 0.86 vs 0.94), so the Gaussian
-#'   default is recommended.
+#'   (n = 50, `robust.divisor = "n"`) they under-covered (average 0.86 vs
+#'   0.94), so the Gaussian default is recommended.
 #' * `boot.type = "xyz"`: the xyz-paired bootstrap (Section 4.2), which
 #'   resamples rows of the design, the response and the nodewise residuals
 #'   after a correction that makes the bootstrap errors orthogonal to them.
@@ -113,8 +127,8 @@
 #'   \eqn{T^*_j = (\hat b^*_j - \hat\beta_j)/\hat{s.e.}^*_j}{T*_j = (b*_j - betahat_j)/se*_j}
 #'   is the studentized centred bootstrap statistic, and the same under the
 #'   complete null hypothesis, on the scale of `bhat`, as in hdi), followed by
-#'   the SILM additions `boot.type`, `multiplier`, `robust`, `robust.divisor`,
-#'   `gaussian.stub`,
+#'   the SILM additions `boot.type`, `multiplier`, `robust`, `robust.divisor`
+#'   (no effect when `robust = FALSE`), `gaussian.stub`,
 #'   `B.eff` (number of bootstrap samples used; smaller than `B` only when
 #'   xyz-paired samples had to be discarded), `tstat` (the studentized
 #'   statistics \eqn{\hat b_j/\hat{s.e.}_j}{b_j / se_j}), `boot.summary` (per
@@ -148,21 +162,23 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                             boot.type = if (wild) "wild" else "residual",
                             multiplier = c("gaussian", "mammen"),
                             boot.H0c = identical(multiplecorr.method, "WY"), groups = NULL,
-                            robust.divisor = c("n", "n-s")) {
+                            robust.divisor = c("n-s", "n")) {
   # (missing() is unreliable once an argument has been modified.)
   given <- c(wild = !missing(wild), boot.type = !missing(boot.type),
-             multiplier = !missing(multiplier))
+             multiplier = !missing(multiplier), robust.divisor = !missing(robust.divisor))
   flags <- .check_proj_flags(parallel = parallel, verbose = verbose, return.Z = return.Z,
                              robust = robust, boot.shortcut = boot.shortcut,
                              return.bootdist = return.bootdist, wild = wild,
                              gaussian.stub = gaussian.stub)
   for (nm in names(flags)) assign(nm, flags[[nm]])
-  robust.divisor <- .check_divisor(robust.divisor, robust)
+  robust.divisor <- .check_divisor(robust.divisor, robust, given = given[["robust.divisor"]])
   args <- .check_proj_args(x, y, family, standardize, multiplecorr.method, betainit, sigma, Z,
                            boot = TRUE, stub = gaussian.stub)
   x <- args$x
   y <- args$y
   B <- .check_integer(B, "B", "number of bootstrap samples", min = 2)
+  # (A numeric betainit is only accepted with gaussian.stub = TRUE.)
+  .check_divisor_betainit(betainit, nrow(x), robust, robust.divisor, given[["robust.divisor"]])
   extras <- .boot_check_extras(boot.type, wild, !given[["wild"]], !given[["boot.type"]], multiplier,
                                !given[["multiplier"]], .check_flag01(boot.H0c, "boot.H0c"),
                                multiplecorr.method, groups, gaussian.stub, robust, ncol(x),

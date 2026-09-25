@@ -27,7 +27,7 @@ boot.lasso.proj(
   multiplier = c("gaussian", "mammen"),
   boot.H0c = identical(multiplecorr.method, "WY"),
   groups = NULL,
-  robust.divisor = c("n", "n-s")
+  robust.divisor = c("n-s", "n")
 )
 }
 \arguments{
@@ -94,12 +94,24 @@ needed for \code{\link[=groupTest]{groupTest()}}.}
 for which bootstrap summaries are stored, so that simultaneous intervals
 and group tests for them are available without \code{return.bootdist = TRUE}.}
 
-\item{robust.divisor}{Normalisation of the robust standard error:
-\code{"n"} (default, as in hdi and Section 3.3.2 of Dezeure, Bühlmann and
-Zhang, 2017) or \code{"n-s"}, equation (5) of that paper, which multiplies it
-by \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))}, where \eqn{\hat s}{s} is
-the number of variables selected by the initial lasso. Only used with
-\code{robust = TRUE}.}
+\item{robust.divisor}{Normalisation of the robust standard error, only
+used with \code{robust = TRUE}: \code{"n-s"} (default) is equation (5) of
+Dezeure, Bühlmann and Zhang (2017), which multiplies the standard error
+with divisor n by \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))}, where
+\eqn{\hat s}{s} is the number of variables selected by the initial
+lasso (for a numeric \code{betainit}, its number of non-zero entries, which
+must be smaller than n; p for a dense estimate); \code{"n"} is hdi's
+normalisation (Section 3.3.2 of the paper), reproduces hdi and has no
+such restriction. The default was chosen by a pre-registered study
+that compared the two on the paper's simulation designs and a
+heteroscedastic stress design (Gaussian linear models with lasso
+initial fits), under a decision rule fixed in advance (calibration
+first, then power): TODO-DEFAULTS-NUMBERS (which metric decided and by
+how much; see \code{validation/calibration/DEFAULTS.md} and
+\code{validation/calibration/defaults-results/REPORT.md} in the source
+repository). In \code{lasso.proj()} it also applies to \code{family = "binomial"}
+(the linearised model) and to a numeric \code{betainit}, which the study did
+not cover.}
 }
 \value{
 An object of class \code{c("silm_boot_lasso_proj", "silm_proj")}: a list
@@ -112,8 +124,8 @@ with the elements of hdi's result, in the same order, \code{pval},
 \eqn{T^*_j = (\hat b^*_j - \hat\beta_j)/\hat{s.e.}^*_j}{T*_j = (b*_j - betahat_j)/se*_j}
 is the studentized centred bootstrap statistic, and the same under the
 complete null hypothesis, on the scale of \code{bhat}, as in hdi), followed by
-the SILM additions \code{boot.type}, \code{multiplier}, \code{robust}, \code{robust.divisor},
-\code{gaussian.stub},
+the SILM additions \code{boot.type}, \code{multiplier}, \code{robust}, \code{robust.divisor}
+(no effect when \code{robust = FALSE}), \code{gaussian.stub},
 \code{B.eff} (number of bootstrap samples used; smaller than \code{B} only when
 xyz-paired samples had to be discarded), \code{tstat} (the studentized
 statistics \eqn{\hat b_j/\hat{s.e.}_j}{b_j / se_j}), \code{boot.summary} (per
@@ -129,7 +141,9 @@ obtain individual p-values, p-values adjusted for multiple testing with the
 Westfall-Young max-T procedure, and bootstrap confidence intervals
 (Dezeure, Bühlmann and Zhang, 2017). This is a port of
 \code{boot.lasso.proj()} from the archived package 'hdi' (version 0.1-10) with
-the same arguments and defaults.
+the same arguments and defaults, plus the SILM additions below; the results
+differ from hdi's only where the section "Compatibility with hdi 0.1-10"
+says so.
 }
 \details{
 The residual bootstrap (default) resamples the centred lasso residuals; the
@@ -144,17 +158,30 @@ zero), with the same resampled errors.
 
 The paper recommends the robust standard error (\code{robust = TRUE}) in
 practice, and the wild bootstrap under heteroscedastic errors. The default
-\code{robust = FALSE} is kept for compatibility with hdi.
+\code{robust = FALSE} is kept for compatibility with hdi. With \code{robust = TRUE},
+the robust standard errors of the original and of every bootstrap fit use
+the divisor \eqn{n - \hat s}{n - s} of the paper's equation (5) by default
+(see \code{robust.divisor}).
 }
 \section{Compatibility with hdi 0.1-10}{
 
-For the same data, arguments and random seed, \code{boot.lasso.proj()} returns
-the same \code{pval}, \code{pval.corr}, \code{bhat}, \code{se}, \code{betahat}, \code{sigmahat}, \code{lambda}
-and bootstrap distributions as \code{hdi::boot.lasso.proj()} run sequentially,
-and leaves the random number generator in the same state; this is verified
-against the archived hdi package (with the same version of glmnet). The
-differences are:
+For the same data, arguments and random seed (and \code{robust.divisor = "n"}
+if \code{robust = TRUE}), \code{boot.lasso.proj()} returns the same \code{pval},
+\code{pval.corr}, \code{bhat}, \code{se}, \code{betahat}, \code{sigmahat}, \code{lambda} and bootstrap
+distributions as \code{hdi::boot.lasso.proj()} run sequentially, and leaves the
+random number generator in the same state; this is verified against the
+archived hdi package (with the same version of glmnet). The differences
+are:
 \itemize{
+\item \code{robust = TRUE}: the robust standard error of the original fit and of
+every bootstrap fit uses the divisor \eqn{n - \hat s}{n - s} of equation
+(5) of Dezeure, Bühlmann and Zhang (2017) by default
+(\code{robust.divisor = "n-s"}, with \eqn{\hat s}{s} the size of the
+respective lasso fit); hdi divided by n (Section 3.3.2 of the paper).
+\code{se} and, through the studentized bootstrap statistics, the p-values and
+bootstrap distributions differ from hdi's; \code{robust.divisor = "n"}
+reproduces hdi exactly. Results with \code{robust = FALSE} (the default) are
+not affected.
 \item The result has class \code{c("silm_boot_lasso_proj", "silm_proj")} instead of
 \code{"hdi"}, and additional elements (see Value).
 \item With \code{parallel = TRUE}, hdi drew the cross-validation folds of the
@@ -170,11 +197,9 @@ Documented properties of hdi that are kept: a user-supplied \code{sigma} only
 affects the standard errors of the original fit, not those of the
 bootstrap fits (a warning is given); \code{boot.shortcut} has no effect with
 \code{betainit = "scaled lasso"} (a warning is given) and uses glmnet's linear
-interpolation along its lambda path; the robust standard error uses the
-divisor n (Dezeure, Bühlmann and Zhang, 2017, Section 3.3.2; see
-\code{robust.divisor} for the n - s divisor of their equation 5); the
-individual p-values are (2 c + 1) / (B + 1), where c is the smaller of the
-two tail counts of the bootstrap distribution.
+interpolation along its lambda path; the individual p-values are
+(2 c + 1) / (B + 1), where c is the smaller of the two tail counts of the
+bootstrap distribution.
 }
 
 \section{SILM additions (not in hdi)}{
@@ -184,8 +209,8 @@ two tail counts of the bootstrap distribution.
 with Mammen's two-point multipliers (Section 4.1), which also match the
 third moment of the errors. The paper found no advantage over Gaussian
 multipliers; in our replication of its small heteroscedastic example
-(n = 50) they under-covered (average 0.86 vs 0.94), so the Gaussian
-default is recommended.
+(n = 50, \code{robust.divisor = "n"}) they under-covered (average 0.86 vs
+0.94), so the Gaussian default is recommended.
 \item \code{boot.type = "xyz"}: the xyz-paired bootstrap (Section 4.2), which
 resamples rows of the design, the response and the nodewise residuals
 after a correction that makes the bootstrap errors orthogonal to them.

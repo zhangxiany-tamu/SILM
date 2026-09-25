@@ -22,6 +22,13 @@ Some limits apply to the whole comparison:
   statistical, not exact.
 * Some tolerances and expected-failure tags in `CRITERIA.md` were informed by
   exploratory runs before registration, as `CRITERIA.md` states.
+* The robust standard errors of `lasso.proj()` and `boot.lasso.proj()`
+  (coverage 0.956/0.944 and WY FWER 0.041 in the heteroscedastic example,
+  and the Mammen section below) were computed with hdi's divisor,
+  `robust.divisor = "n"`. The default of SILM 2.0.0 is `"n-s"` (equation 5
+  of the paper), chosen afterwards by the defaults study
+  (`validation/calibration/defaults-results/REPORT.md`,
+  TODO-DEFAULTS-NUMBERS).
 
 ## Summary
 
