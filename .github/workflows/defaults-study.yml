@@ -27,6 +27,9 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
+          # All jobs must use the same versions (checked by defaults.R); glmnet
+          # is pinned because a new release can reach the mirror mid-run.
+          extra-packages: glmnet@5.1
       - run: R CMD INSTALL .
       - name: Designs, Theta and Z
         run: Rscript validation/calibration/defaults.R --setup --cores 4 --out setup
@@ -57,6 +60,9 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
+          # All jobs must use the same versions (checked by defaults.R); glmnet
+          # is pinned because a new release can reach the mirror mid-run.
+          extra-packages: glmnet@5.1
       - run: R CMD INSTALL .
       - uses: actions/download-artifact@v4
         with:
