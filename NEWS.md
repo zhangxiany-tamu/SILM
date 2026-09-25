@@ -20,6 +20,10 @@ which were available only in the archived 'hdi'.
   random number state under the same seed). This is verified continuously
   against the archived CRAN packages (`validation/`, and the `equivalence`
   GitHub workflow).
+* The simulation studies of Zhang and Cheng (2017) and Dezeure, Bühlmann and
+  Zhang (2017) were replicated against pre-registered criteria
+  (`replication/`): 629 of 684 criteria pass, and the papers' conclusions are
+  reproduced.
 
 ## Breaking changes
 

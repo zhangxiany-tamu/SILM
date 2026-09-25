@@ -98,9 +98,13 @@ See `vignette("SILM")` for a guided tour.
   in the paper; hdi 0.1-7 (March 2019) silently switched it to the Z&Z rule.
   SILM 2.0.0 follows the paper by default (`nodewise = "cv"`);
   `nodewise = "ZnZ"` reproduces results from 2019 to 2026.
-* **Papers.** `replication/` contains scripts that reproduce the simulation
-  studies of both papers against pre-registered criteria; see
-  `replication/REPORT.md` for the results.
+* **Papers.** `replication/` reproduces the simulation studies of both
+  papers against criteria that were committed before the run
+  (`replication/CRITERIA.md`). 629 of 684 criteria pass
+  (`replication/REPORT.md`), and the papers' conclusions are reproduced. Most
+  of the remaining differences are cells where SILM is more powerful than
+  published, or where the papers' random draws or settings cannot be recovered
+  exactly (`replication/INTERPRETATION.md`).
 
 ## Citation
 

@@ -56,7 +56,10 @@
 #' @section SILM additions (not in hdi):
 #' * `boot.type = "wild"` with `multiplier = "mammen"`: the wild bootstrap
 #'   with Mammen's two-point multipliers (Section 4.1), which also match the
-#'   third moment of the errors.
+#'   third moment of the errors. The paper found no advantage over Gaussian
+#'   multipliers; in our replication of its small heteroscedastic example
+#'   (n = 50) they under-covered (average 0.86 vs 0.94), so the Gaussian
+#'   default is recommended.
 #' * `boot.type = "xyz"`: the xyz-paired bootstrap (Section 4.2), which
 #'   resamples rows of the design, the response and the nodewise residuals
 #'   after a correction that makes the bootstrap errors orthogonal to them.
