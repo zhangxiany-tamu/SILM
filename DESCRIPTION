@@ -1,7 +1,7 @@
 Package: SILM
 Type: Package
 Title: Simultaneous Inference for High-Dimensional Linear Models
-Version: 1.0.0.9000
+Version: 2.0.0
 Authors@R: c(
     person("Xianyang", "Zhang", role = c("aut", "cre"),
            email = "zhangxiany@stat.tamu.edu"),

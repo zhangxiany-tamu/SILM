@@ -1,4 +1,4 @@
-# SILM 2.0.0
+# SILM 2.0.0 (2026-09-24)
 
 SILM was archived on CRAN on 2026-07-10 because its dependency 'scalreg' was
 archived (and with it 'hdi', which SILM also used). This release makes SILM
