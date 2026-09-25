@@ -91,10 +91,13 @@ such restriction. The default was chosen by a pre-registered study
 that compared the two on the paper's simulation designs and a
 heteroscedastic stress design (Gaussian linear models with lasso
 initial fits), under a decision rule fixed in advance (calibration
-first, then power): TODO-DEFAULTS-NUMBERS (which metric decided and by
-how much; see \code{validation/calibration/DEFAULTS.md} and
-\code{validation/calibration/defaults-results/REPORT.md} in the source
-repository). In \code{lasso.proj()} it also applies to \code{family = "binomial"}
+first, then power): over 7 designs (100 replications each), \code{"n-s"} reduced the mean
+calibration shortfall from 0.055 to 0.031 (95\% bootstrap interval of the difference:
+-0.028 to -0.018), mainly by bringing the familywise error rate closer to 5\% (for
+example Westfall-Young 0.12 to 0.05 and Holm 0.11 to 0.05 in the paper's Toeplitz
+design), at a mean power loss of 0.027 (see \code{validation/calibration/DEFAULTS.md} and
+\code{validation/calibration/defaults-results/REPORT.md} in the source repository). In
+\code{lasso.proj()} it also applies to \code{family = "binomial"}
 (the linearised model) and to a numeric \code{betainit}, which the study did
 not cover.}
 }
@@ -162,7 +165,8 @@ logical response is used as 0/1, as in hdi.
 
 Documented properties of hdi that are kept: a numeric \code{betainit} refers to
 the centred and (if \code{standardize = TRUE}) scaled design; with the "cv lasso"
-initial fit, \code{sigmahat} is \eqn{\|y - \hat y\|/\sqrt{n - \hat s - 1}}{||y - yhat|| / sqrt(n - s - 1)}
+initial fit, \code{sigmahat} is \eqn{\|y - \hat y\|/\sqrt{n - \hat s - 1}}{||y - yhat|| /
+sqrt(n - s - 1)}
 (the intercept of the glmnet fit is counted); the WY adjustment uses the
 homoscedastic covariance \code{crossprod(Z)} even when \code{robust = TRUE}, and its
 adjusted p-values can be 0 (below the Monte Carlo resolution 1/N).

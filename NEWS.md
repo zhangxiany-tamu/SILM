@@ -30,8 +30,16 @@ which were available only in the archived 'hdi'.
   from then until SILM was archived. The default `"ZnZ"` was chosen by a
   pre-registered study of both rules (`validation/calibration/DEFAULTS.md`;
   results in `validation/calibration/defaults-results/REPORT.md`) under its
-  fixed decision rule (calibration first, then power): TODO-DEFAULTS-NUMBERS
-  (which metric decided and by how much). With the default (and
+  fixed decision rule (calibration first, then power): over 20
+  `Sim.CI()`/`Step()` settings, 8 `SR()` settings and 3 `ST()` settings (200
+  replications each), `"ZnZ"` halved the mean calibration shortfall (coverage
+  below 95%, error rates above 5%) from 0.100 to 0.053 (95% bootstrap interval
+  of the difference [-0.051, -0.044]). The joint coverage of `Sim.CI()` for
+  all p coefficients was higher or equal in all 20 settings (for example 0.77
+  with `"cv"` and 0.90 with `"ZnZ"` for signals (1.5, -1, 2) at p = 500), and
+  exact support recovery by `SR()` improved; the price is about 12% wider
+  intervals and 0.02-0.07 less power of `Step()` and `ST()`. With the default
+  (and
   `legacy = TRUE` for `ST()`), results are those of SILM 1.0.0 as installed
   from 2019 to 2026, so this is not a breaking change for them;
   `nodewise = "cv"` gives the paper's tuning and reproduces SILM 1.0.0 with
@@ -100,8 +108,13 @@ which were available only in the archived 'hdi'.
     standard errors. It is the default, chosen by a pre-registered study
     (`validation/calibration/DEFAULTS.md`; results in
     `validation/calibration/defaults-results/REPORT.md`) under its fixed
-    decision rule (calibration first, then power): TODO-DEFAULTS-NUMBERS
-    (which metric decided and by how much). `robust.divisor = "n"` is hdi's
+    decision rule (calibration first, then power): over 7 designs (100
+    replications each), `"n-s"` reduced the mean calibration shortfall from
+    0.055 to 0.031 (95% bootstrap interval of the difference [-0.028,
+    -0.018]), mainly by bringing the familywise error rate closer to 5% (for
+    example Westfall-Young 0.12 to 0.05 and Holm 0.11 to 0.05 in the paper's
+    Toeplitz design), at a mean power loss of 0.027. `robust.divisor = "n"` is
+    hdi's
     normalisation (Section 3.3.2 of the paper) and reproduces hdi. With a
     numeric `betainit`, `"n-s"` needs fewer than n non-zero entries.
 * `Theta.hat()` returns the matrix Theta used by `SR()`, `Sim.CI()` and

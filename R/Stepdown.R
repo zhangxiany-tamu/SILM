@@ -15,6 +15,14 @@
 #' @param alpha The significance level (familywise error rate; default 0.05).
 #' @return A list with two integer vectors, `"non-studentized test"` and
 #'   `"studentized test"`: the indices of the rejected hypotheses.
+#' @section Finite-sample behaviour:
+#' In the defaults study of the source repository
+#' (`validation/calibration/defaults-results/REPORT.md`; n = 100, the paper's
+#' designs, 200 replications each) the familywise error rate of both tests was
+#' at most 0.05 in every setting except the exchangeable designs with
+#' s0 = 15, where it was 0.12-0.15 (0.21-0.24 with `nodewise = "cv"`). See
+#' [Sim.CI()] for the bias of the de-biased lasso behind such deviations.
+#'
 #' @inheritSection SR Nodewise tuning
 #' @inherit SR references
 #' @seealso [SR()], [Sim.CI()], [ST()]

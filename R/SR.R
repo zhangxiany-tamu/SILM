@@ -52,10 +52,16 @@
 #' The default `"ZnZ"` of SILM 2.0.0 was chosen by a pre-registered study
 #' that compared the two rules on the simulation designs of Zhang and Cheng
 #' (2017) and on stress designs, under a decision rule fixed in advance
-#' (calibration first, then power): TODO-DEFAULTS-NUMBERS (which metric
-#' decided and by how much; see `validation/calibration/DEFAULTS.md` and
-#' `validation/calibration/defaults-results/REPORT.md` in the source
-#' repository). With the default, the results equal those of SILM 1.0.0 as
+#' (calibration first, then power): over 20 `Sim.CI()`/`Step()` settings, 8 `SR()`
+#' settings and 3 `ST()` settings (200 replications each), `"ZnZ"` halved the mean
+#' calibration shortfall (coverage below 95%, error rates above 5%) from 0.100 to 0.053
+#' (95% bootstrap interval of the difference: -0.051 to -0.044). The joint coverage of
+#' `Sim.CI()` for all p coefficients was higher or equal in all 20 settings (for example
+#' 0.77 with `"cv"` and 0.90 with `"ZnZ"` for signals (1.5, -1, 2) at p = 500), and exact
+#' support recovery by `SR()` improved; the price is about 12% wider intervals and
+#' 0.02-0.07 less power of `Step()` and `ST()` (see `validation/calibration/DEFAULTS.md`
+#' and `validation/calibration/defaults-results/REPORT.md` in the source repository). With
+#' the default, the results equal those of SILM 1.0.0 as
 #' installed from 2019 to 2026 (with hdi 0.1-7 to 0.1-10; for `ST()` together
 #' with `legacy = TRUE`). Use `nodewise = "cv"` for the tuning of the paper;
 #' it reproduces SILM 1.0.0 with hdi 0.1-6. Both settings reproduce the

@@ -93,6 +93,25 @@
 #' simultaneous inference under heteroscedastic errors and is the paper's
 #' preferred method in that case.
 #'
+#' @section Finite-sample behaviour:
+#' Validity is asymptotic. Two simulation studies in the source repository
+#' (`validation/calibration/`; n = 100, p = 120 or 500, robust standard errors,
+#' B = 499, 100-200 replications per setting) found:
+#' * Individual coverage averaged over all coefficients was 0.91-0.96, but
+#'   lower for the non-zero coefficients (0.79-0.93), for the reason explained
+#'   in [Sim.CI()].
+#' * With the default `robust.divisor = "n-s"`, the Westfall-Young FWER was
+#'   0.03-0.12 in the designs with 3 signals and 0.33 with 15 signals
+#'   (`"n"`: 0.05-0.21 and 0.57); joint coverage (eq. 10) was 0.77-0.96.
+#' * `boot.shortcut = TRUE` (refitting at the original lambda) was about 7
+#'   times faster than the default full refit and at least as well calibrated
+#'   (FWER 0.05 vs 0.04 and 0.06 vs 0.065 with `"n-s"`; 0.12 vs 0.14 and
+#'   0.075 vs 0.155 with `"n"`). The default stays the full refit, as in hdi
+#'   and the paper.
+#' * The bootstrap p-values and intervals are empirical quantiles, so small
+#'   `B` gives slightly lower coverage; use the default `B = 1000` or more
+#'   for final results.
+#'
 #' @inheritParams lasso.proj
 #' @param family Only `"gaussian"` is supported.
 #' @param multiplecorr.method `"WY"` (default; Westfall-Young max-T procedure

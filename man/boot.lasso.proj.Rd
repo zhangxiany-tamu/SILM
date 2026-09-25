@@ -106,10 +106,13 @@ such restriction. The default was chosen by a pre-registered study
 that compared the two on the paper's simulation designs and a
 heteroscedastic stress design (Gaussian linear models with lasso
 initial fits), under a decision rule fixed in advance (calibration
-first, then power): TODO-DEFAULTS-NUMBERS (which metric decided and by
-how much; see \code{validation/calibration/DEFAULTS.md} and
-\code{validation/calibration/defaults-results/REPORT.md} in the source
-repository). In \code{lasso.proj()} it also applies to \code{family = "binomial"}
+first, then power): over 7 designs (100 replications each), \code{"n-s"} reduced the mean
+calibration shortfall from 0.055 to 0.031 (95\% bootstrap interval of the difference:
+-0.028 to -0.018), mainly by bringing the familywise error rate closer to 5\% (for
+example Westfall-Young 0.12 to 0.05 and Holm 0.11 to 0.05 in the paper's Toeplitz
+design), at a mean power loss of 0.027 (see \code{validation/calibration/DEFAULTS.md} and
+\code{validation/calibration/defaults-results/REPORT.md} in the source repository). In
+\code{lasso.proj()} it also applies to \code{family = "binomial"}
 (the linearised model) and to a numeric \code{betainit}, which the study did
 not cover.}
 }
@@ -228,6 +231,29 @@ individual inference, and for simultaneous inference under homoscedastic
 errors; the wild bootstrap with \code{robust = TRUE} is valid for individual and
 simultaneous inference under heteroscedastic errors and is the paper's
 preferred method in that case.
+}
+
+\section{Finite-sample behaviour}{
+
+Validity is asymptotic. Two simulation studies in the source repository
+(\verb{validation/calibration/}; n = 100, p = 120 or 500, robust standard errors,
+B = 499, 100-200 replications per setting) found:
+\itemize{
+\item Individual coverage averaged over all coefficients was 0.91-0.96, but
+lower for the non-zero coefficients (0.79-0.93), for the reason explained
+in \code{\link[=Sim.CI]{Sim.CI()}}.
+\item With the default \code{robust.divisor = "n-s"}, the Westfall-Young FWER was
+0.03-0.12 in the designs with 3 signals and 0.33 with 15 signals
+(\code{"n"}: 0.05-0.21 and 0.57); joint coverage (eq. 10) was 0.77-0.96.
+\item \code{boot.shortcut = TRUE} (refitting at the original lambda) was about 7
+times faster than the default full refit and at least as well calibrated
+(FWER 0.05 vs 0.04 and 0.06 vs 0.065 with \code{"n-s"}; 0.12 vs 0.14 and
+0.075 vs 0.155 with \code{"n"}). The default stays the full refit, as in hdi
+and the paper.
+\item The bootstrap p-values and intervals are empirical quantiles, so small
+\code{B} gives slightly lower coverage; use the default \code{B = 1000} or more
+for final results.
+}
 }
 
 \examples{

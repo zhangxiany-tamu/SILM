@@ -26,7 +26,7 @@ Exception: where both options are compatible with the paper, or the old behaviou
 
 | Item | Old behaviour | Class | New default | Exact legacy |
 |---|---|---|---|---|
-| Nodewise λ in SR/ST/Sim.CI/Step/Theta.hat | Z&Z (hdi ≥ 0.1-7 changed a default under SILM) | Contradicts ZC paper Sec 5 ("10-fold CV"), but the default is decided by empirical performance (pre-registered defaults study, `validation/calibration/DEFAULTS.md`; results in `defaults-results/REPORT.md`, TODO-DEFAULTS-NUMBERS) | `nodewise = "ZnZ"` (= SILM 1.0.0 + hdi 0.1-7..0.1-10; selected by the study's decision rule, calibration first, then power: TODO-DEFAULTS-NUMBERS) | `nodewise = "cv"` (= SILM 1.0.0 + hdi 0.1-6, the paper's tuning); the default itself reproduces 2019–2026 |
+| Nodewise λ in SR/ST/Sim.CI/Step/Theta.hat | Z&Z (hdi ≥ 0.1-7 changed a default under SILM) | Contradicts ZC paper Sec 5 ("10-fold CV"), but the default is decided by empirical performance (pre-registered defaults study, `validation/calibration/DEFAULTS.md`; results in `defaults-results/REPORT.md`: calibration shortfall 0.100 with cv, 0.053 with ZnZ) | `nodewise = "ZnZ"` (= SILM 1.0.0 + hdi 0.1-7..0.1-10; selected by the study's decision rule, calibration first, then power: shortfall halved, power +0.016) | `nodewise = "cv"` (= SILM 1.0.0 + hdi 0.1-6, the paper's tuning); the default itself reproduces 2019–2026 |
 | `lasso.proj(family="binomial")` intercept | Mean-centring of the IRLS working data | Bug on valid inputs (bias −0.67, 0% coverage) | Project out sqrt(w) | `legacy = TRUE` |
 | ST studentized decision string | `"rejct"` | Bug | `"reject"` | `legacy = TRUE` |
 | ST screening size when k = n0−1−\|set1\| = 0 | `1:0` keeps 1 extra variable (\|B\| = n0) | Contradicts paper (\|B\| = \|D2\|−1) | Keep none | `legacy = TRUE` |
@@ -35,7 +35,7 @@ Exception: where both options are compatible with the paper, or the old behaviou
 | Step when every hypothesis is rejected | Wasted pass and up to 2M warnings; results correct | Cosmetic | Guard with RNG burn (identical results and seed) | n/a |
 | ST empty lasso set; ST k < 0; `drop` bug; constant columns; bad inputs | Errors | Error path only | Fixed or informative error | n/a |
 | hdi `parallel=TRUE` (fold draws in forks) | Not reproducible | Bug | Pre-drawn fold ids, identical to hdi's sequential run | n/a |
-| Robust s.e. divisor in lasso.proj/boot.lasso.proj (`robust = TRUE`) | 1/n (hdi; DBZ Sec 3.3.2) | Paper-compatible either way (DBZ eq. 5 uses n − ŝ); default decided by empirical performance (defaults study, `validation/calibration/DEFAULTS.md`, TODO-DEFAULTS-NUMBERS) | `robust.divisor = "n-s"` (eq. 5, original and bootstrap s.e.) | `robust.divisor = "n"` (= hdi 0.1-10) |
+| Robust s.e. divisor in lasso.proj/boot.lasso.proj (`robust = TRUE`) | 1/n (hdi; DBZ Sec 3.3.2) | Paper-compatible either way (DBZ eq. 5 uses n − ŝ); default decided by empirical performance (defaults study, `validation/calibration/DEFAULTS.md`: calibration shortfall 0.055 with n, 0.031 with n − s; power −0.027) | `robust.divisor = "n-s"` (eq. 5, original and bootstrap s.e.) | `robust.divisor = "n"` (= hdi 0.1-10) |
 | Documented hdi quirks: type-7 confint quirk, df n−ŝ−1, homoscedastic WY covariance, (2c+1)/(B+1), shortcut interpolation, numeric-betainit scale, user-σ asymmetry | — | Not bugs, or paper-compatible | hdi behaviour, documented; warnings on the traps | — |
 
 **Resolved decisions (2026-09-24):**
@@ -44,7 +44,7 @@ Exception: where both options are compatible with the paper, or the old behaviou
 3. Version **2.0.0** (see §B).
 4. The provenance commit is not backdated; its message records the source URL and sha256.
 5. The dev libraries live in the cache directory. The user's global R library (glmnet 4.1-10) is never modified. The harness uses the current CRAN glmnet (5.1 at the time of writing) from `lib-glmnet-5.0`.
-6. Each default is the option with the better empirical performance, as decided by the pre-registered defaults study (`validation/calibration/DEFAULTS.md`; results in `validation/calibration/defaults-results/REPORT.md`, TODO-DEFAULTS-NUMBERS); the rows of the table above say which defaults it changed. The previous behaviour stays available through the argument, and the equivalence harness and the fixture tests pass the old value explicitly.
+6. Each default is the option with the better empirical performance, as decided by the pre-registered defaults study (`validation/calibration/DEFAULTS.md`; results in `validation/calibration/defaults-results/REPORT.md`, run 36099112308 on 2026-09-25); the rows of the table above say which defaults it changed. The previous behaviour stays available through the argument, and the equivalence harness and the fixture tests pass the old value explicitly.
 
 ---
 

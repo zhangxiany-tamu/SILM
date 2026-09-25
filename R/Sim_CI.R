@@ -7,7 +7,7 @@
 #'
 #' **Note on `alpha`.** Unlike [ST()] and [Step()], where `alpha` is the
 #' significance level, here `alpha` is the **confidence level** of the
-#' simultaneous intervals (default 0.95, i.e. 95\% intervals). This is kept for
+#' simultaneous intervals (default 0.95, i.e. 95% intervals). This is kept for
 #' compatibility with SILM 1.0.0; a value below 0.5 triggers a warning.
 #'
 #' See [SR()] for the model assumptions (no intercept, centred data) and the
@@ -27,6 +27,22 @@
 #'     non-studentized statistic;}
 #'   \item{band.st}{the same for the studentized statistic (rows `low.st`,
 #'     `up.st`).}
+#' @section Finite-sample behaviour:
+#' The intervals are asymptotically valid. In finite samples the de-biased
+#' lasso keeps a bias term, \eqn{(I - \hat\Theta\hat\Sigma)(\hat\beta -
+#' \beta)}{(I - Theta Sigma)(beta.hat - beta)}, that the bootstrap does not
+#' reflect. It mainly affects the intervals for the non-zero coefficients, and
+#' it grows with strong correlation, with signals of mixed signs and with the
+#' number of signals. In the defaults study of the source repository
+#' (`validation/calibration/defaults-results/REPORT.md`; n = 100, the paper's
+#' designs, 200 replications each), the joint coverage of 95% intervals over
+#' the zero coefficients was at least 0.86 in every setting, but over S0 it
+#' was 0.84-0.97 for s0 = 3 and 0.47-0.76 for s0 = 15 with positive signals
+#' (with `nodewise = "cv"`: 0.80-0.96 and 0.31-0.60), and 0.45 for the signals
+#' (1.5, -1, 2) in the Toeplitz design with p = 500 (`"cv"`: 0.21). Treat
+#' intervals for sets that contain strong signals with caution unless s0 is
+#' small.
+#'
 #' @inheritSection SR Nodewise tuning
 #' @inherit SR references
 #' @seealso [SR()], [Step()], [ST()]; `boot.lasso.proj()` for the bootstrapped

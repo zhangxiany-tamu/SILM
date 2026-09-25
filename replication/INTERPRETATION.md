@@ -15,8 +15,8 @@ Some limits apply to the whole comparison:
 * The Zhang and Cheng methods (and the "ZC approach" in the DBZ comparison)
   were run with `nodewise = "cv"`, the tuning described in the paper. The
   default of SILM 2.0.0 is `"ZnZ"`, chosen afterwards by the defaults study
-  (`validation/calibration/defaults-results/REPORT.md`,
-  TODO-DEFAULTS-NUMBERS).
+  (`validation/calibration/defaults-results/REPORT.md`: mean calibration
+  shortfall 0.100 with `"cv"` and 0.053 with `"ZnZ"`).
 * The papers' random designs, coefficient draws and seeds cannot be recovered,
   and some settings are not fully specified. The comparison is therefore
   statistical, not exact.
@@ -27,8 +27,8 @@ Some limits apply to the whole comparison:
   and the Mammen section below) were computed with hdi's divisor,
   `robust.divisor = "n"`. The default of SILM 2.0.0 is `"n-s"` (equation 5
   of the paper), chosen afterwards by the defaults study
-  (`validation/calibration/defaults-results/REPORT.md`,
-  TODO-DEFAULTS-NUMBERS).
+  (`validation/calibration/defaults-results/REPORT.md`: mean calibration
+  shortfall 0.055 with `"n"` and 0.031 with `"n-s"`).
 
 ## Summary
 
