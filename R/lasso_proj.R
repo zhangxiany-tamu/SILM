@@ -58,8 +58,11 @@
 #'   Westfall-Young type procedure based on simulated Gaussian vectors) or any
 #'   method of [stats::p.adjust()] (default `"holm"`).
 #' @param N Number of Monte Carlo samples for `multiplecorr.method = "WY"`.
-#' @param parallel,ncores Compute the nodewise regressions in parallel
-#'   (forking; not on Windows). Does not change the results.
+#' @param parallel,ncores Compute the nodewise regressions (and, in
+#'   boot.lasso.proj(), the bootstrap refits) in parallel (forking; not on
+#'   Windows). Does not change the results. With a BLAS library that uses
+#'   OpenMP threads, forked workers can occasionally stall; setting
+#'   `OMP_NUM_THREADS=1` before starting R avoids this.
 #' @param betainit Initial estimator: `"cv lasso"` (default; lasso with
 #'   lambda.1se from 10-fold cross-validation), `"scaled lasso"`, or a numeric
 #'   vector of coefficients for the centred (and scaled) design, which requires

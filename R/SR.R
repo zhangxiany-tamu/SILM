@@ -30,7 +30,9 @@
 #'   the random draw of the nodewise cross-validation folds.
 #' @param parallel,ncores Compute the nodewise regressions in parallel on
 #'   `ncores` cores (forking; not on Windows). This does not change the
-#'   results.
+#'   results. With a BLAS library that uses OpenMP threads, forked workers can
+#'   occasionally stall; setting the environment variable `OMP_NUM_THREADS=1`
+#'   before starting R avoids this.
 #' @return A list with two integer vectors: `"de-biased Lasso"`, the variables
 #'   selected by the support recovery procedure, and `"scaled Lasso"`, the
 #'   support of the scaled lasso.

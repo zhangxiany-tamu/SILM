@@ -40,8 +40,11 @@ method of \code{\link[stats:p.adjust]{stats::p.adjust()}} (default \code{"holm"}
 
 \item{N}{Number of Monte Carlo samples for \code{multiplecorr.method = "WY"}.}
 
-\item{parallel, ncores}{Compute the nodewise regressions in parallel
-(forking; not on Windows). Does not change the results.}
+\item{parallel, ncores}{Compute the nodewise regressions (and, in
+boot.lasso.proj(), the bootstrap refits) in parallel (forking; not on
+Windows). Does not change the results. With a BLAS library that uses
+OpenMP threads, forked workers can occasionally stall; setting
+\code{OMP_NUM_THREADS=1} before starting R avoids this.}
 
 \item{betainit}{Initial estimator: \code{"cv lasso"} (default; lasso with
 lambda.1se from 10-fold cross-validation), \code{"scaled lasso"}, or a numeric

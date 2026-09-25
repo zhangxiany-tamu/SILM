@@ -37,7 +37,9 @@ the random draw of the nodewise cross-validation folds.}
 
 \item{parallel, ncores}{Compute the nodewise regressions in parallel on
 \code{ncores} cores (forking; not on Windows). This does not change the
-results.}
+results. With a BLAS library that uses OpenMP threads, forked workers can
+occasionally stall; setting the environment variable \code{OMP_NUM_THREADS=1}
+before starting R avoids this.}
 }
 \value{
 A list with two integer vectors: \code{"de-biased Lasso"}, the variables

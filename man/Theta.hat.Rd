@@ -28,7 +28,9 @@ the result). No check for centring is made.}
 
 \item{parallel, ncores}{Compute the nodewise regressions in parallel on
 \code{ncores} cores (forking; not on Windows). This does not change the
-results.}
+results. With a BLAS library that uses OpenMP threads, forked workers can
+occasionally stall; setting the environment variable \code{OMP_NUM_THREADS=1}
+before starting R avoids this.}
 }
 \value{
 A p x p matrix with attributes \code{method} (\code{"inverse-gram"} or

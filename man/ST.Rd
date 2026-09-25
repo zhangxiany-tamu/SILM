@@ -51,7 +51,9 @@ screening, the statistics were \code{-Inf} (now 0, with a warning).}
 
 \item{parallel, ncores}{Compute the nodewise regressions in parallel on
 \code{ncores} cores (forking; not on Windows). This does not change the
-results.}
+results. With a BLAS library that uses OpenMP threads, forked workers can
+occasionally stall; setting the environment variable \code{OMP_NUM_THREADS=1}
+before starting R avoids this.}
 }
 \value{
 A list of four elements, in this order (note that the names are

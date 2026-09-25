@@ -43,8 +43,11 @@ boot.lasso.proj(
 based on the bootstrap under the complete null hypothesis) or any method
 of \code{\link[stats:p.adjust]{stats::p.adjust()}}.}
 
-\item{parallel, ncores}{Compute the nodewise regressions in parallel
-(forking; not on Windows). Does not change the results.}
+\item{parallel, ncores}{Compute the nodewise regressions (and, in
+boot.lasso.proj(), the bootstrap refits) in parallel (forking; not on
+Windows). Does not change the results. With a BLAS library that uses
+OpenMP threads, forked workers can occasionally stall; setting
+\code{OMP_NUM_THREADS=1} before starting R avoids this.}
 
 \item{betainit}{\code{"cv lasso"} (default) or \code{"scaled lasso"}.}
 
