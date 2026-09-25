@@ -1,0 +1,101 @@
+# Defaults study (validation/calibration/DEFAULTS.md): nodewise "cv" vs "ZnZ"
+# and robust.divisor "n" vs "n-s" on the papers' designs. Run on demand.
+name: defaults-study
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+  OMP_NUM_THREADS: 1
+  OPENBLAS_NUM_THREADS: 1
+  NSHARDS: 40
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: check
+      - run: R CMD INSTALL .
+      - name: Designs, Theta and Z
+        run: Rscript validation/calibration/defaults.R --setup --cores 4 --out setup
+      - name: Smoke test (every cell once, few draws) before the shards start
+        run: |
+          Rscript validation/calibration/defaults.R --smoke --cores 4 --setup-file setup/setup.rds --out smoke
+          Rscript validation/calibration/defaults_summary.R smoke smoke/results
+      - uses: actions/upload-artifact@v4
+        with:
+          name: defaults-setup
+          path: setup/
+
+  shard:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: check
+      - run: R CMD INSTALL .
+      - uses: actions/download-artifact@v4
+        with:
+          name: defaults-setup
+          path: setup
+      - name: Run shard
+        run: >
+          Rscript validation/calibration/defaults.R --shard ${{ matrix.shard }} --nshards "$NSHARDS"
+          --cores 4 --setup-file setup/setup.rds --out shards
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: defaults-shard-${{ matrix.shard }}
+          path: shards/
+
+  summarise:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: defaults-shard-*
+          path: shards
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: defaults-setup
+          path: results/setup
+      - name: Summarise and decide
+        run: |
+          Rscript validation/calibration/defaults_summary.R shards results
+          cat results/REPORT.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: defaults-results
+          path: results/
