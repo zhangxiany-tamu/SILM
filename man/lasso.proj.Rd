@@ -21,7 +21,8 @@ lasso.proj(
   suppress.grouptesting = FALSE,
   robust = FALSE,
   do.ZnZ = FALSE,
-  legacy = FALSE
+  legacy = FALSE,
+  robust.divisor = c("n", "n-s")
 )
 }
 \arguments{
@@ -74,6 +75,13 @@ Bühlmann and Zhang (2017), valid under heteroscedastic errors.}
 
 \item{legacy}{Reproduce hdi exactly for \code{family = "binomial"} (see the
 section "Compatibility with hdi 0.1-10").}
+
+\item{robust.divisor}{Normalisation of the robust standard error:
+\code{"n"} (default, as in hdi and Section 3.3.2 of Dezeure, Bühlmann and
+Zhang, 2017) or \code{"n-s"}, equation (5) of that paper, which multiplies it
+by \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))}, where \eqn{\hat s}{s} is
+the number of variables selected by the initial lasso. Only used with
+\code{robust = TRUE}.}
 }
 \value{
 An object of class \code{c("silm_lasso_proj", "silm_proj")}: a list with

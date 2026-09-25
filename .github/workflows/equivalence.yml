@@ -26,6 +26,12 @@ jobs:
   equivalence:
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    # The full tier is split into shards (regular expressions on scenario ids)
+    # that run in parallel; the fast tier runs as one job.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(((github.event.inputs.tier == 'full' || github.event_name == 'schedule') && '["^A|^E-|^V-", "^B-SR|^B-Step", "^B-SimCI-znz", "^B-SimCI-cv", "^B-ST-znz", "^B-ST-cv", "^C-", "^D-"]') || '["."]') }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       OPENBLAS_NUM_THREADS: 1
@@ -53,7 +59,7 @@ jobs:
         run: Rscript validation/setup_legacy_libs.R
 
       - name: Run equivalence harness
-        run: Rscript validation/run_equivalence.R --tier "$TIER" --glmnet user --cores 4
+        run: Rscript validation/run_equivalence.R --tier "$TIER" --glmnet user --cores 4 --only "${{ matrix.shard }}"
 
       - name: Job summary
         if: always()
@@ -64,5 +70,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: equivalence-report-${{ env.TIER }}
+          name: equivalence-report-${{ env.TIER }}-${{ strategy.job-index }}
           path: validation/reports/

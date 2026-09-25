@@ -45,7 +45,8 @@
 
 # Studentized statistics of one xyz bootstrap sample (NA if the sample has to
 # be discarded).
-.xyz_draw <- function(rows, hats, yvec, truth, betainit, lambda, robust, foldid = NULL) {
+.xyz_draw <- function(rows, hats, yvec, truth, betainit, lambda, robust, foldid = NULL,
+                      divisor = "n") {
   n <- length(rows)
   # The folds are drawn first, so that the random number stream does not
   # depend on which samples are discarded (parallel runs pre-draw them).
@@ -67,7 +68,8 @@
                          foldid = foldid)
   bs <- despars.lasso.est(x = xs, y = ys, Z = zs, betalasso = init$betalasso)
   ses <- if (robust) {
-    sandwich.var.est.stderr(x = xs, y = ys, betainit = init$betalasso, Z = zs)
+    se <- sandwich.var.est.stderr(x = xs, y = ys, betainit = init$betalasso, Z = zs)
+    .robust_df_adjust(se, n, init$betalasso, divisor)
   } else {
     init$sigmahat * sqrt(colSums(zs^2)) / n
   }
@@ -77,9 +79,9 @@
 # p x B matrix of studentized statistics over the bootstrap samples in `index`
 # (NA columns for discarded samples). Folds are handled by .boot_map().
 .xyz_cbootdist <- function(hats, index, yvec, truth, betainit, lambda, robust, parallel,
-                           ncores) {
+                           ncores, divisor = "n") {
   draw_one <- function(b, foldid = NULL) {
-    .xyz_draw(index[, b], hats, yvec, truth, betainit, lambda, robust, foldid)
+    .xyz_draw(index[, b], hats, yvec, truth, betainit, lambda, robust, foldid, divisor)
   }
   fold_fun <- if (identical(betainit, "cv lasso") && is.null(lambda)) {
     function(b) .xyz_foldid(index[, b])

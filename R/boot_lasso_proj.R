@@ -144,7 +144,8 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                             return.bootdist = FALSE, wild = FALSE, gaussian.stub = FALSE,
                             boot.type = if (wild) "wild" else "residual",
                             multiplier = c("gaussian", "mammen"),
-                            boot.H0c = identical(multiplecorr.method, "WY"), groups = NULL) {
+                            boot.H0c = identical(multiplecorr.method, "WY"), groups = NULL,
+                            robust.divisor = c("n", "n-s")) {
   # (missing() is unreliable once an argument has been modified.)
   given <- c(wild = !missing(wild), boot.type = !missing(boot.type),
              multiplier = !missing(multiplier))
@@ -153,6 +154,7 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                              return.bootdist = return.bootdist, wild = wild,
                              gaussian.stub = gaussian.stub)
   for (nm in names(flags)) assign(nm, flags[[nm]])
+  robust.divisor <- .check_divisor(robust.divisor, robust)
   args <- .check_proj_args(x, y, family, standardize, multiplecorr.method, betainit, sigma, Z,
                            boot = TRUE, stub = gaussian.stub)
   x <- args$x
@@ -195,13 +197,14 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
   rc <- as.vector(r) - mean(r)
   bproj <- despars.lasso.est(x = x, y = y, Z = Z, betalasso = betalasso)
   se <- est.stderr.despars.lasso(x = x, y = y, Z = Z, betalasso = betalasso,
-                                 sigmahat = sigmahat, robust = robust)
+                                 sigmahat = sigmahat, robust = robust, divisor = robust.divisor)
   lambda <- NULL
   if (boot.shortcut) lambda <- initial.estimate$lambda
 
   compute <- function(ystar, boot.truth) {
     .boot_cbootdist(ystar = ystar, boot.truth = boot.truth, x = x, Z = Z, betainit = betainit,
-                    lambda = lambda, robust = robust, parallel = parallel, ncores = ncores)
+                    lambda = lambda, robust = robust, parallel = parallel, ncores = ncores,
+                    divisor = robust.divisor)
   }
 
   # Centred bootstrap distribution. The resampling draws are made here, as in
@@ -213,7 +216,8 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
     index <- .xyz_index(nrow(x), B)
     compute_xyz <- function(yvec, truth) {
       .xyz_cbootdist(hats, index, yvec, truth, betainit = betainit, lambda = lambda,
-                     robust = robust, parallel = parallel, ncores = ncores)
+                     robust = robust, parallel = parallel, ncores = ncores,
+                     divisor = robust.divisor)
     }
     cboot.dist <- compute_xyz(hats$yhat, betalasso)
   } else {
@@ -268,6 +272,7 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
   tstat <- stats::setNames(bproj / se, colnames(x))
   out <- c(out, list(
     boot.type = boot.type, multiplier = extras$multiplier, robust = robust,
+    robust.divisor = robust.divisor,
     gaussian.stub = gaussian.stub,
     B.eff = B.eff,
     tstat = tstat,

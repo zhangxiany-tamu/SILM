@@ -111,6 +111,12 @@ calculate.Z <- function(x, parallel, ncores, verbose, Z, do.ZnZ = FALSE, foldid 
   }
   scaleZ <- rep(1, ncol(Z))
   if (!isTRUE(all.equal(rep(1, ncol(x)), colSums(Z * x) / nrow(x), tolerance = 10^-8))) {
+    normaliser <- colSums(Z * x) / nrow(x)
+    degenerate <- !is.finite(normaliser) | abs(normaliser) <= sqrt(.Machine$double.eps)
+    if (any(degenerate)) {
+      .stop("The supplied 'Z' is not usable: t(Z_j) x_j / n is zero or not finite for ",
+            "column(s) ", paste(utils::head(which(degenerate), 10), collapse = ", "), ".")
+    }
     rescale.out <- score.rescale(Z = Z, x = x)
     Z <- rescale.out$Z
     scaleZ <- rescale.out$scaleZ

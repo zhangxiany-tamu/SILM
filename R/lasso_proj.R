@@ -83,6 +83,12 @@
 #' @param do.ZnZ Choose the nodewise tuning parameter with the Z&Z rule.
 #' @param legacy Reproduce hdi exactly for `family = "binomial"` (see the
 #'   section "Compatibility with hdi 0.1-10").
+#' @param robust.divisor Normalisation of the robust standard error:
+#'   `"n"` (default, as in hdi and Section 3.3.2 of Dezeure, Bühlmann and
+#'   Zhang, 2017) or `"n-s"`, equation (5) of that paper, which multiplies it
+#'   by \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))}, where \eqn{\hat s}{s} is
+#'   the number of variables selected by the initial lasso. Only used with
+#'   `robust = TRUE`.
 #' @return An object of class `c("silm_lasso_proj", "silm_proj")`: a list with
 #'   elements `pval` (individual p-values), `pval.corr` (adjusted p-values),
 #'   `groupTest` and `clusterGroupTest` (both `NULL`), `sigmahat`,
@@ -119,7 +125,8 @@ lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                        ncores = getOption("mc.cores", 2L), betainit = "cv lasso",
                        sigma = NULL, Z = NULL, verbose = FALSE, return.Z = FALSE,
                        suppress.grouptesting = FALSE, robust = FALSE, do.ZnZ = FALSE,
-                       legacy = FALSE) {
+                       legacy = FALSE, robust.divisor = c("n", "n-s")) {
+  robust.divisor <- .check_divisor(robust.divisor, robust)
   args <- .check_proj_args(x, y, family, standardize, multiplecorr.method, betainit, sigma, Z)
   x <- args$x
   y <- args$y
@@ -156,7 +163,7 @@ lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
 
   bproj <- despars.lasso.est(x = x, y = y, Z = Z, betalasso = betalasso)
   se <- est.stderr.despars.lasso(x = x, y = y, Z = Z, betalasso = betalasso,
-                                 sigmahat = sigmahat, robust = robust)
+                                 sigmahat = sigmahat, robust = robust, divisor = robust.divisor)
   scaleb <- 1 / se
   bprojrescaled <- bproj * scaleb
   pval <- 2 * pnorm(abs(bprojrescaled), lower.tail = FALSE)
@@ -182,6 +189,7 @@ lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
   out$robust <- robust
   out$multiplecorr.method <- multiplecorr.method
   out$legacy <- legacy
+  out$robust.divisor <- robust.divisor
   out$tstat <- stats::setNames(bproj / se, colnames(x))
   class(out) <- c("silm_lasso_proj", "silm_proj")
   out

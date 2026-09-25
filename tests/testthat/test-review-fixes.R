@@ -107,3 +107,65 @@ test_that("xyz: the sign of a normaliser does not matter; folds follow original 
   f <- SILM:::.xyz_foldid(rows)
   expect_true(all(tapply(f, rows, function(v) length(unique(v))) == 1))
 })
+
+test_that("non-finite or degenerate Z, sigma and betainit are rejected", {
+  withr::local_seed(56)
+  x <- matrix(rnorm(60 * 12), 60, 12)
+  y <- x[, 1] + rnorm(60)
+  run <- function(...) lasso.proj(x, y, suppress.grouptesting = TRUE, ...)
+  expect_error(run(Z = matrix(0, 60, 12)), "not usable")
+  z1 <- matrix(rnorm(60 * 12), 60, 12)
+  z1[, 3] <- 0
+  expect_error(run(Z = z1), "column\\(s\\) 3")
+  expect_error(run(Z = matrix(Inf, 60, 12)), "finite numeric matrix")
+  expect_error(run(sigma = Inf), "positive finite")
+  expect_error(run(betainit = c(Inf, rep(0, 11)), sigma = 1), "numeric 'betainit'")
+  expect_error(boot.lasso.proj(x, y, B = 10, sigma = Inf), "positive finite")
+})
+
+test_that("robust.divisor = \"n-s\" applies equation (5) of Dezeure, Buehlmann and Zhang", {
+  withr::local_seed(57)
+  x <- matrix(rnorm(60 * 12), 60, 12)
+  y <- x[, 1:2] %*% c(1, -1) + rnorm(60)
+  fit <- function(...) {
+    set.seed(4)
+    lasso.proj(x, y, robust = TRUE, suppress.grouptesting = TRUE, return.Z = TRUE, ...)
+  }
+  a <- fit()
+  b <- fit(robust.divisor = "n-s")
+  expect_identical(a$robust.divisor, "n")
+  expect_identical(b$robust.divisor, "n-s")
+  s <- sum(a$betahat != 0)
+  expect_gt(s, 0)
+  expect_equal(b$se, a$se * sqrt(60 / (60 - s)))
+  expect_identical(a$bhat, b$bhat)
+  expect_true(all(b$pval >= a$pval))
+  expect_warning(lasso.proj(x, y, robust.divisor = "n-s", suppress.grouptesting = TRUE),
+                 "only used with robust = TRUE")
+  expect_error(lasso.proj(x, y, robust = TRUE, robust.divisor = "df"), "should be one of")
+})
+
+test_that("robust.divisor rescales the bootstrap standard errors consistently", {
+  withr::local_seed(58)
+  x <- matrix(rnorm(50 * 10), 50, 10)
+  y <- x[, 1] + rnorm(50)
+  for (type in c("wild", "xyz")) {
+    fit <- function(divisor) {
+      set.seed(5)
+      boot.lasso.proj(x, y, B = 20, robust = TRUE, boot.type = type, boot.shortcut = TRUE,
+                      return.bootdist = TRUE, robust.divisor = divisor)
+    }
+    a <- fit("n")
+    b <- fit("n-s")
+    ratio_orig <- b$se / a$se
+    expect_equal(unname(ratio_orig), rep(ratio_orig[[1]], 10))
+    expect_gt(ratio_orig[[1]], 1)
+    # T* = (b* - b) / se*: each bootstrap se* is inflated by its own
+    # sqrt(n / (n - s*)), the same factor for all p coordinates of a sample.
+    ratio_boot <- (b$cboot.dist / b$se) / (a$cboot.dist / a$se)
+    expect_equal(ratio_boot, matrix(ratio_boot[1, ], 10, ncol(ratio_boot), byrow = TRUE),
+                 ignore_attr = TRUE)
+    expect_true(all(ratio_boot > 0 & ratio_boot <= 1 + 1e-12))
+    expect_identical(a$bhat, b$bhat)
+  }
+})

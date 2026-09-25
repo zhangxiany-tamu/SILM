@@ -26,7 +26,8 @@ boot.lasso.proj(
   boot.type = if (wild) "wild" else "residual",
   multiplier = c("gaussian", "mammen"),
   boot.H0c = identical(multiplecorr.method, "WY"),
-  groups = NULL
+  groups = NULL,
+  robust.divisor = c("n", "n-s")
 )
 }
 \arguments{
@@ -92,6 +93,13 @@ needed for \code{\link[=groupTest]{groupTest()}}.}
 \item{groups}{Optional group (vector of indices or names) or list of groups
 for which bootstrap summaries are stored, so that simultaneous intervals
 and group tests for them are available without \code{return.bootdist = TRUE}.}
+
+\item{robust.divisor}{Normalisation of the robust standard error:
+\code{"n"} (default, as in hdi and Section 3.3.2 of Dezeure, Bühlmann and
+Zhang, 2017) or \code{"n-s"}, equation (5) of that paper, which multiplies it
+by \eqn{\sqrt{n/(n-\hat s)}}{sqrt(n / (n - s))}, where \eqn{\hat s}{s} is
+the number of variables selected by the initial lasso. Only used with
+\code{robust = TRUE}.}
 }
 \value{
 An object of class \code{c("silm_boot_lasso_proj", "silm_proj")}: a list

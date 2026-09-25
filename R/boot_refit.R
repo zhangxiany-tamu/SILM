@@ -12,7 +12,7 @@
 
 # Studentized bootstrap statistics (b* - boot.truth) / se* (p x B matrix).
 .boot_cbootdist <- function(ystar, boot.truth, x, Z, betainit, lambda, robust, parallel,
-                            ncores) {
+                            ncores, divisor = "n") {
   initstar <- boot.initial.fit(x = x, ystar = ystar, betainit = betainit, lambda = lambda,
                                parallel = parallel, ncores = ncores)
   betainitstar <- do.call(cbind, lapply(initstar, function(out) out$betalasso))
@@ -20,7 +20,7 @@
   bstar <- despars.lasso.est(x = x, y = ystar, Z = Z, betalasso = betainitstar)
   sestar <- boot.se(x = x, ystar = ystar, Z = Z, betainitstar = betainitstar,
                     sigmahatstar = sigmahatstar, robust = robust, parallel = parallel,
-                    ncores = ncores)
+                    ncores = ncores, divisor = divisor)
   (bstar - boot.truth) / sestar
 }
 
@@ -72,11 +72,12 @@ boot.initial.fit <- function(x, ystar, betainit, lambda, parallel, ncores) {
 }
 
 # Bootstrap standard errors (p x B matrix).
-boot.se <- function(x, ystar, Z, betainitstar, sigmahatstar, robust, parallel, ncores) {
+boot.se <- function(x, ystar, Z, betainitstar, sigmahatstar, robust, parallel, ncores,
+                    divisor = "n") {
   if (robust) {
     se_one <- function(b) {
       est.stderr.despars.lasso(x = x, y = ystar[, b], Z = Z, betalasso = betainitstar[, b],
-                               sigmahat = sigmahatstar[b], robust = TRUE)
+                               sigmahat = sigmahatstar[b], robust = TRUE, divisor = divisor)
     }
     do.call(cbind, .silm_lapply(seq_len(ncol(ystar)), se_one, parallel, ncores))
   } else {

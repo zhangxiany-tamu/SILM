@@ -21,13 +21,26 @@ despars.lasso.est <- function(x, y, Z, betalasso) {
 }
 
 # Standard errors of the de-sparsified lasso: sigmahat ||Z_j|| / n (Z rescaled
-# so that t(Z_j) x_j / n = 1), or the robust (sandwich) version.
-est.stderr.despars.lasso <- function(x, y, Z, betalasso, sigmahat, robust) {
+# so that t(Z_j) x_j / n = 1), or the robust (sandwich) version. For the robust
+# version, divisor = "n" is hdi's (and Section 3.3.2's) normalisation;
+# divisor = "n-s" gives equation (5) of Dezeure, Buehlmann and Zhang (2017),
+# i.e. the standard error multiplied by sqrt(n / (n - s_hat)).
+est.stderr.despars.lasso <- function(x, y, Z, betalasso, sigmahat, robust, divisor = "n") {
   if (robust) {
-    sandwich.var.est.stderr(x = x, y = y, Z = Z, betainit = betalasso)
+    se <- sandwich.var.est.stderr(x = x, y = y, Z = Z, betainit = betalasso)
+    .robust_df_adjust(se, nrow(x), betalasso, divisor)
   } else {
     (sigmahat * sqrt(diag(crossprod(Z)))) / nrow(x)
   }
+}
+
+.robust_df_adjust <- function(se, n, betalasso, divisor) {
+  if (identical(divisor, "n")) return(se)
+  df <- n - sum(betalasso != 0)
+  if (df <= 0) {
+    .stop("robust.divisor = \"n-s\" needs fewer selected variables than observations.")
+  }
+  se * sqrt(n / df)
 }
 
 # Robust standard error (Dezeure, Buehlmann and Zhang, 2017, Section 3.3.2):

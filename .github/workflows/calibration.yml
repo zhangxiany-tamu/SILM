@@ -1,0 +1,62 @@
+# Calibration study of boot.lasso.proj() and Sim.CI()/Step()
+# (validation/calibration). Run on demand; about 21 CPU-hours in 40 shards.
+name: calibration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: check
+      - name: Install SILM
+        run: R CMD INSTALL .
+      - name: Run shard
+        run: Rscript validation/calibration/run.R --shard ${{ matrix.shard }} --nshards 40 --cores 4 --out shards
+      - uses: actions/upload-artifact@v4
+        with:
+          name: calibration-shard-${{ matrix.shard }}
+          path: shards/
+
+  summarise:
+    needs: shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: calibration-shard-*
+          path: shards
+          merge-multiple: true
+      - name: Summarise
+        run: |
+          Rscript validation/calibration/summarise.R shards results
+          cat results/REPORT.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: calibration-results
+          path: results/

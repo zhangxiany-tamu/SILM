@@ -28,8 +28,9 @@
       .stop("The nodewise lasso needs at least 10 observations (it uses 10-fold ",
             "cross-validation), or supply 'Z'.")
     }
-  } else if (!is.matrix(Z) || !is.numeric(Z) || !all(dim(Z) == dim(x)) || anyNA(Z)) {
-    .stop("'Z' must be a numeric matrix of the same dimension as 'x'.")
+  } else if (!is.matrix(Z) || !is.numeric(Z) || !all(dim(Z) == dim(x)) || anyNA(Z) ||
+             any(!is.finite(Z))) {
+    .stop("'Z' must be a finite numeric matrix of the same dimension as 'x'.")
   }
   constant <- .constant_columns(x)
   if (length(constant)) {
@@ -38,7 +39,7 @@
   }
 
   if (is.numeric(betainit)) {
-    if (length(betainit) != p || anyNA(betainit)) {
+    if (length(betainit) != p || anyNA(betainit) || any(!is.finite(betainit))) {
       .stop("A numeric 'betainit' must be a vector of length ncol(x) = ", p, ".")
     }
     if (boot && !stub) {
@@ -58,8 +59,9 @@
     .stop("The betainit argument needs to be either a vector of length ncol(x) or one of ",
           "'scaled lasso' or 'cv lasso'")
   }
-  if (!is.null(sigma) && (!is.numeric(sigma) || length(sigma) != 1L || !(sigma > 0))) {
-    .stop("'sigma' must be a single positive number.")
+  if (!is.null(sigma) && (!is.numeric(sigma) || length(sigma) != 1L || !is.finite(sigma) ||
+                           !(sigma > 0))) {
+    .stop("'sigma' must be a single positive finite number.")
   }
   list(x = x, y = y, sigma = sigma)
 }
@@ -76,4 +78,12 @@
     .stop("'", arg, "' must be an integer >= ", min, " (", what, ").")
   }
   x
+}
+
+.check_divisor <- function(divisor, robust) {
+  divisor <- match.arg(divisor, c("n", "n-s"))
+  if (divisor != "n" && !isTRUE(as.logical(robust))) {
+    warning("'robust.divisor' is only used with robust = TRUE.", call. = FALSE)
+  }
+  divisor
 }
