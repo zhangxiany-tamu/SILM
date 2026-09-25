@@ -96,22 +96,28 @@ See `vignette("SILM")` for a guided tour.
   depending on the installed version of hdi: with hdi 0.1-6 (January to March
   2019) its nodewise lasso used the cross-validated tuning parameter described
   in the paper; hdi 0.1-7 (March 2019) silently switched it to the Z&Z rule.
-  SILM 2.0.0 follows the paper by default (`nodewise = "cv"`);
-  `nodewise = "ZnZ"` reproduces results from 2019 to 2026.
+  SILM 2.0.0 makes the rule explicit. Its default, `nodewise = "ZnZ"`, gives
+  the results of 2019 to 2026 (for `ST()` with `legacy = TRUE`) and was
+  chosen by a pre-registered study under its fixed decision rule (calibration
+  first, then power): TODO-DEFAULTS-NUMBERS (which metric decided and by how
+  much; `validation/calibration/DEFAULTS.md` and
+  `validation/calibration/defaults-results/REPORT.md`); `nodewise = "cv"`
+  gives the paper's tuning and the results of SILM 1.0.0 with hdi 0.1-6.
 * **Papers.** `replication/` reruns the simulation studies of both papers
-  and compares them with criteria committed before the run
-  (`replication/CRITERIA.md`). Under these criteria, 629 of 684 headline
-  criteria pass (`replication/REPORT.md`), and the papers' main qualitative
-  conclusions are reproduced. The comparison is statistical, not exact: the
-  papers' random designs and coefficient draws cannot be recovered, and the
-  Zhang and Cheng targets are taken from the arXiv version
+  (with the settings of the papers and of hdi at the time: `nodewise = "cv"`
+  and `robust.divisor = "n"`) and compares them with criteria committed
+  before the run (`replication/CRITERIA.md`). Under these criteria, 629 of
+  684 headline criteria pass (`replication/REPORT.md`), and the papers' main
+  qualitative conclusions are reproduced. The comparison is statistical, not
+  exact: the papers' random designs and coefficient draws cannot be
+  recovered, and the Zhang and Cheng targets are taken from the arXiv version
   (arXiv:1603.01295v1). `replication/INTERPRETATION.md` discusses the
   failures; its explanations were written after seeing the results and are
   hypotheses.
 * **Finite samples.** All methods are asymptotic, and their finite-sample
   coverage and error control depend on the design, the signal and n. See the
-  sections "Finite-sample behaviour" in `?Sim.CI` and `?boot.lasso.proj`,
-  and the calibration study in `validation/calibration/`.
+  calibration studies in `validation/calibration/` (including the defaults
+  study, `DEFAULTS.md` and `defaults-results/REPORT.md`).
 
 ## Citation
 

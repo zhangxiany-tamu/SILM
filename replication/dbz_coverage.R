@@ -22,12 +22,13 @@
 # * ZC (Gaussian cell only; ZC appears only in Figs 4-5): the individual
 #   interval for beta_j is band.st of Sim.CI(X, y, set = j, M = 500,
 #   alpha = 0.95, Theta = Theta), one call per coefficient, with
-#   Theta = Theta.hat(X) (nodewise lasso with CV) computed once for the
-#   design. For |set| = 1, band.nst equals band.st (the bootstrap quantile is
-#   scale equivariant). SILM's ZC starts from the scaled lasso (as Zhang and
-#   Cheng do) with SILM's own Theta; the paper's ZC presumably started from
-#   the CV lasso with hdi's Z. This is why the ZC average-coverage tolerance
-#   has 0.015 instead of 0.01 for the implementation difference.
+#   Theta = Theta.hat(X, nodewise = "cv") (nodewise lasso with CV) computed
+#   once for the design. For |set| = 1, band.nst equals band.st (the
+#   bootstrap quantile is scale equivariant). SILM's ZC starts from the
+#   scaled lasso (as Zhang and Cheng do) with SILM's own Theta; the paper's
+#   ZC presumably started from the CV lasso with hdi's Z. This is why the ZC
+#   average-coverage tolerance has 0.015 instead of 0.01 for the
+#   implementation difference.
 # RLDPE (Figs 4-6) is not implemented in SILM and is not replicated.
 
 source(file.path("replication", "common.R")); load_silm()
@@ -47,7 +48,9 @@ beta <- dbz_beta("U(-2,2)", S$p, S$s0)
 active <- which(beta != 0)
 Z <- dbz_Z(X)
 set.seed(dbz$seeds$cov_theta)
-Theta <- Theta.hat(X, parallel = rep_cores() > 1L, ncores = rep_cores())
+# nodewise = "cv" (the paper's tuning, the default when the stored results were
+# computed) keeps them reproducible now that the default is "ZnZ".
+Theta <- Theta.hat(X, nodewise = "cv", parallel = rep_cores() > 1L, ncores = rep_cores())
 
 # Individual ZC intervals for all p coefficients (p x 2 matrix).
 zc_ci <- function(y) {

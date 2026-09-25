@@ -11,7 +11,7 @@ ST(
   test.set,
   M = 500,
   alpha = 0.05,
-  nodewise = c("cv", "ZnZ"),
+  nodewise = c("ZnZ", "cv"),
   center = FALSE,
   legacy = FALSE,
   parallel = FALSE,
@@ -36,15 +36,16 @@ ignored with a warning (SILM 1.0.0 ignored them silently).}
 \item{alpha}{The significance level (default 0.05).}
 
 \item{nodewise}{Tuning rule for the nodewise lasso that estimates
-\eqn{\Theta} on \eqn{D_2}: \code{"cv"} (default) or \code{"ZnZ"}; see \code{\link[=SR]{SR()}}.}
+\eqn{\Theta} on \eqn{D_2}: \code{"ZnZ"} (default) or \code{"cv"}; see \code{\link[=SR]{SR()}}.}
 
 \item{center}{Logical. If \code{TRUE}, \code{X.f} and \code{Y.f} are centred separately
 within each sub-sample before screening and testing. The default \code{FALSE}
 uses the data as given and warns when they do not appear to be centred.}
 
-\item{legacy}{Logical. If \code{TRUE}, reproduce SILM 1.0.0 exactly, including
-three behaviours that were corrected in SILM 2.0.0: the decision of the
-studentized test was spelled \code{"rejct"}; when \code{sub.size} left exactly
+\item{legacy}{Logical. If \code{TRUE}, reproduce SILM 1.0.0 exactly (with the
+matching \code{nodewise}; see "Nodewise tuning"), including three behaviours
+that were corrected in SILM 2.0.0: the decision of the studentized test
+was spelled \code{"rejct"}; when \code{sub.size} left exactly
 \eqn{|D_2| - 1} variables selected by the screening lasso, one additional
 variable was kept; and when no variable of \code{test.set} survived the
 screening, the statistics were \code{-Inf} (now 0, with a warning).}
@@ -85,13 +86,27 @@ matrix \eqn{\Theta} is always estimated by the nodewise lasso.
 
 SILM 1.0.0 obtained \eqn{\Theta} from an internal function of the 'hdi'
 package. With hdi 0.1-6, current when SILM 1.0.0 was released (January
-2019), the tuning parameter was the cross-validated lambda (\code{"cv"}). hdi
-0.1-7 (March 2019) changed the default of that internal function to the
-Z&Z rule, so from then until SILM was archived (July 2026) SILM computed
-\code{nodewise = "ZnZ"} without saying so. SILM now follows the paper by
-default; use \code{nodewise = "ZnZ"} to reproduce results obtained with SILM
-1.0.0 and hdi 0.1-7 to 0.1-10. Both settings reproduce the respective
-archived versions exactly (same numbers under the same random seed).
+2019), the tuning parameter was the cross-validated lambda described in
+Zhang and Cheng (2017, Section 5) (\code{"cv"}). hdi 0.1-7 (March 2019)
+silently changed the default of that internal function to the Z&Z rule,
+so from then until SILM was archived (July 2026) SILM installations
+computed \code{nodewise = "ZnZ"} without saying so.
+
+The default \code{"ZnZ"} of SILM 2.0.0 was chosen by a pre-registered study
+that compared the two rules on the simulation designs of Zhang and Cheng
+(2017) and on stress designs, under a decision rule fixed in advance
+(calibration first, then power): TODO-DEFAULTS-NUMBERS (which metric
+decided and by how much; see \code{validation/calibration/DEFAULTS.md} and
+\code{validation/calibration/defaults-results/REPORT.md} in the source
+repository). With the default, the results equal those of SILM 1.0.0 as
+installed from 2019 to 2026 (with hdi 0.1-7 to 0.1-10; for \code{ST()} together
+with \code{legacy = TRUE}). Use \code{nodewise = "cv"} for the tuning of the paper;
+it reproduces SILM 1.0.0 with hdi 0.1-6. Both settings reproduce the
+respective archived versions exactly (same numbers under the same random
+seed).
+
+\code{\link[=lasso.proj]{lasso.proj()}} and \code{\link[=boot.lasso.proj]{boot.lasso.proj()}} keep hdi's default for their
+nodewise residuals (\code{do.ZnZ = FALSE}, the cross-validated lambda).
 }
 
 \examples{

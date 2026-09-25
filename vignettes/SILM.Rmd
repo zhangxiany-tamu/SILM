@@ -118,6 +118,9 @@ of the de-biased lasso, which is fast and needs no refitting. `boot.lasso.proj()
 refits the lasso for every bootstrap sample. Dezeure, Bühlmann and Zhang (2017)
 found that the latter often has better finite-sample coverage. It also handles
 heteroscedastic errors (with the wild bootstrap and robust standard errors).
+Their default nodewise tuning also differs: `Sim.CI()` uses the Z&Z rule
+(`nodewise = "ZnZ"`), while `boot.lasso.proj()` keeps hdi's cross-validated
+lambda (`do.ZnZ = FALSE`).
 
 ## Reproducing results of the archived versions
 
@@ -125,10 +128,12 @@ SILM 2.0.0 reproduces the archived SILM 1.0.0 and hdi 0.1-10 exactly (the
 same numbers under the same random seed):
 
 * `SR()`, `Sim.CI()`, `Step()`, `ST()`: results obtained with SILM 1.0.0 and
-  hdi 0.1-6 (January to March 2019) are the default (`nodewise = "cv"`).
-  Results obtained with hdi 0.1-7 to 0.1-10 (March 2019 to July 2026) need
-  `nodewise = "ZnZ"`. For `ST()`, `legacy = TRUE` also restores three
-  behaviours of SILM 1.0.0 that were corrected (see `?ST`).
+  hdi 0.1-7 to 0.1-10 (March 2019 to July 2026) are the default
+  (`nodewise = "ZnZ"`, chosen by a pre-registered simulation study; see
+  `?SR`). Results obtained with hdi 0.1-6 (January to March 2019) need
+  `nodewise = "cv"`, the tuning described in Zhang and Cheng (2017). For
+  `ST()`, `legacy = TRUE` also restores three behaviours of SILM 1.0.0 that
+  were corrected (see `?ST`).
 * `lasso.proj()`, `boot.lasso.proj()`: identical to hdi 0.1-10, except for
   `lasso.proj(family = "binomial")`, where hdi's results need
   `legacy = TRUE`.

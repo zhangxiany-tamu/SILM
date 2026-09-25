@@ -39,6 +39,7 @@
   attr(Theta, "lambda") <- NULL
   attr(Theta, "method") <- NULL
   attr(Theta, "center") <- NULL
+  attr(Theta, "nodewise") <- NULL
   Theta
 }
 
@@ -52,9 +53,22 @@
   invisible(NULL)
 }
 
+# A supplied Theta is used as it is, so `nodewise` has no effect. A Theta from
+# Theta.hat() records its nodewise rule; warn when the caller explicitly asked
+# for a different one (nodewise_given = !missing(nodewise) in the caller).
+.check_theta_nodewise <- function(Theta, nodewise, nodewise_given) {
+  used <- attr(Theta, "nodewise")
+  if (isTRUE(nodewise_given) && !is.null(used) && !identical(used, nodewise)) {
+    warning("'Theta' was computed with nodewise = \"", used, "\"; the supplied 'Theta' is ",
+            "used and nodewise = \"", nodewise, "\" has no effect. Compute it with ",
+            "Theta.hat(X, nodewise = \"", nodewise, "\").", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
 # Scaled lasso, variance estimate, de-biased lasso and its variances.
 .silm_fit <- function(X, Y, nodewise, Theta = NULL, parallel = FALSE, ncores = 1L,
-                      center = FALSE) {
+                      center = FALSE, nodewise_given = FALSE) {
   n <- dim(X)[1]
   p <- dim(X)[2]
   Gram <- t(X)%*%X/n
@@ -62,6 +76,7 @@
     .strip_theta_attr(.silm_theta(X, Gram, nodewise, parallel = parallel, ncores = ncores))
   } else {
     .check_theta_center(Theta, center)
+    .check_theta_nodewise(Theta, nodewise, nodewise_given)
     .strip_theta_attr(.check_theta(Theta, p))
   }
 

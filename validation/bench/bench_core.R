@@ -9,7 +9,8 @@ n <- 100; p <- 500
 X <- matrix(rnorm(n * p), n, p) %*% chol(0.9^abs(outer(1:p, 1:p, "-")))
 Y <- as.vector(X[, 1:3] %*% c(1, 1.5, 2) + rt(n, 4) / sqrt(2))
 set.seed(2)
-th <- system.time(Theta <- Theta.hat(X))[["elapsed"]]
+# RESULTS.md was measured with nodewise = "cv", the default at the time.
+th <- system.time(Theta <- Theta.hat(X, nodewise = "cv"))[["elapsed"]]
 tm <- function(expr) system.time(expr)[["elapsed"]]
 set.seed(3); t_ci <- tm(Sim.CI(X, Y, 1:p, M = 500, Theta = Theta))
 set.seed(3); t_step <- tm(Step(X, Y, M = 500, Theta = Theta))

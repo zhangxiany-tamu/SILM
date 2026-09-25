@@ -1,8 +1,17 @@
 # Group B: SILM core functions (SR, Sim.CI, Step, ST) against SILM 1.0.0.
 #
 # The old side runs SILM 1.0.0 with hdi 0.1-10 ("znz") or hdi 0.1-6 ("cv").
-# The new side passes `new_args` (e.g. nodewise = "cv") unless running the
-# harness self-test, where the repository code still uses the archived deps.
+# The new side passes `new_args`, which name the nodewise rule of the mode
+# explicitly (nodewise = "ZnZ" or "cv"), so that the comparison does not
+# depend on SILM's default. Two exceptions (only the "znz" mode is run):
+# * default_nodewise = TRUE (run_equivalence.R --no-new-args): nodewise is
+#   left at its default. The default "ZnZ" must reproduce SILM 1.0.0 as
+#   installed from 2019 to 2026 (hdi 0.1-7 to 0.1-10, lib-legacy-znz), so this
+#   checks the default itself. ST() still gets legacy = TRUE (its corrections
+#   do not depend on the nodewise rule).
+# * self_test = TRUE (--self-test): no SILM-only argument at all; for the
+#   repository code that still used the archived dependencies (before the
+#   nodewise and legacy arguments existed).
 
 core_cells <- function(tier) {
   cells <- list(
@@ -95,7 +104,8 @@ with_new_args <- function(cases, new_args) {
   })
 }
 
-core_scenarios <- function(tier, modes = c("znz", "cv"), self_test = FALSE, st_legacy = TRUE) {
+core_scenarios <- function(tier, modes = c("znz", "cv"), self_test = FALSE, st_legacy = TRUE,
+                           default_nodewise = FALSE) {
   specs <- list(
     SR = list(calls = sr_calls, old = old_SR, new = new_SR),
     SimCI = list(calls = simci_calls, old = old_SimCI, new = new_SimCI),
@@ -106,7 +116,7 @@ core_scenarios <- function(tier, modes = c("znz", "cv"), self_test = FALSE, st_l
   for (fn in names(specs)) {
     base_cases <- core_cases(tier, specs[[fn]]$calls)
     for (mode in modes) {
-      new_args <- if (self_test) NULL else list(nodewise = if (mode == "znz") "ZnZ" else "cv")
+      new_args <- if (self_test || default_nodewise) NULL else list(nodewise = nodewise_arg(mode))
       if (fn == "ST" && !self_test && st_legacy) new_args$legacy <- TRUE
       out[[length(out) + 1L]] <- list(
         id = sprintf("B-%s-%s", fn, mode), legacy_mode = mode,
@@ -116,9 +126,14 @@ core_scenarios <- function(tier, modes = c("znz", "cv"), self_test = FALSE, st_l
       )
     }
   }
-  if (!self_test && st_legacy) out <- c(out, st_edge_scenarios(tier), compat_scenarios(tier))
+  if (!self_test && !default_nodewise && st_legacy) {
+    out <- c(out, st_edge_scenarios(tier), compat_scenarios(tier))
+  }
   out
 }
+
+# The nodewise rule that reproduces a legacy library (never SILM's default).
+nodewise_arg <- function(mode) if (mode == "znz") "ZnZ" else "cv"
 
 # ST edge cells (legacy = TRUE on the new side, so values must match exactly
 # wherever SILM 1.0.0 did not error).
@@ -176,7 +191,7 @@ compat_scenarios <- function(tier) {
     cases_ci[[length(cases_ci) + 1L]] <- list(
       data = if (dn == "p10") d10 else d51, seed = 1, rng = "default",
       args = list(set = st, M = 50, alpha = 0.95,
-                  new_args = list(nodewise = if (mode == "znz") "ZnZ" else "cv")),
+                  new_args = list(nodewise = nodewise_arg(mode))),
       mode = mode, label = sprintf("%s,set=%s,%s", dn, paste(st, collapse = " "), mode))
   }
   by_mode <- function(cases, mode) Filter(function(cs) identical(cs$mode, mode), cases)
@@ -185,7 +200,7 @@ compat_scenarios <- function(tier) {
     for (mode in c("znz", "cv")) {
       cases_sr[[length(cases_sr) + 1L]] <- list(
         data = dd$d, seed = 2, rng = "default", mode = mode,
-        args = list(new_args = list(nodewise = if (mode == "znz") "ZnZ" else "cv")),
+        args = list(new_args = list(nodewise = nodewise_arg(mode))),
         label = paste(dd$lab, mode))
     }
   out <- list()

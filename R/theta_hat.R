@@ -18,7 +18,9 @@
 #'   the result). No check for centring is made.
 #' @return A p x p matrix with attributes `method` (`"inverse-gram"` or
 #'   `"nodewise"`), `center`, and, for the nodewise lasso, `lambda` (the tuning
-#'   parameter used).
+#'   parameter used) and `nodewise` (the tuning rule). [SR()], [Sim.CI()] and
+#'   [Step()] warn when they are given this matrix together with a different
+#'   `nodewise`.
 #' @inheritSection SR Nodewise tuning
 #' @inherit SR references
 #' @examples
@@ -29,7 +31,7 @@
 #' attr(Theta, "method")
 #' SR(X, Y, Theta = Theta)
 #' @export
-Theta.hat <- function(X, nodewise = c("cv", "ZnZ"), center = FALSE, parallel = FALSE,
+Theta.hat <- function(X, nodewise = c("ZnZ", "cv"), center = FALSE, parallel = FALSE,
                       ncores = getOption("mc.cores", 2L)) {
   nodewise <- match.arg(nodewise)
   X <- .check_X(X)
@@ -38,5 +40,6 @@ Theta.hat <- function(X, nodewise = c("cv", "ZnZ"), center = FALSE, parallel = F
   Theta <- .silm_theta(X, t(X)%*%X/n, nodewise, parallel = .check_flag(parallel, "parallel"),
                        ncores = ncores)
   attr(Theta, "center") <- center
+  if (identical(attr(Theta, "method"), "nodewise")) attr(Theta, "nodewise") <- nodewise
   Theta
 }

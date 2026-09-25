@@ -9,7 +9,7 @@ Step(
   Y,
   M = 500,
   alpha = 0.05,
-  nodewise = c("cv", "ZnZ"),
+  nodewise = c("ZnZ", "cv"),
   center = FALSE,
   Theta = NULL,
   parallel = FALSE,
@@ -28,10 +28,11 @@ matrix).}
 
 \item{nodewise}{Tuning rule for the nodewise lasso that estimates
 \eqn{\Theta} (the inverse of the Gram matrix) when \code{p > floor(n/2)}:
-\code{"cv"} (default) uses the lambda minimising 10-fold cross-validation
-error pooled over all nodewise regressions, as described in Zhang and
-Cheng (2017, Section 5); \code{"ZnZ"} refines that lambda with the rule of
-Zhang and Zhang (2014). See the section "Nodewise tuning" below.}
+\code{"ZnZ"} (default) refines the lambda minimising 10-fold cross-validation
+error pooled over all nodewise regressions with the rule of Zhang and
+Zhang (2014); \code{"cv"} uses that cross-validated lambda itself, as
+described in Zhang and Cheng (2017, Section 5). See the section
+"Nodewise tuning" below.}
 
 \item{center}{Logical. If \code{TRUE}, the columns of \code{X} and \code{Y} are centred
 before the analysis. The default \code{FALSE} uses the data as given (as SILM
@@ -39,7 +40,10 @@ before the analysis. The default \code{FALSE} uses the data as given (as SILM
 
 \item{Theta}{Optional precomputed \eqn{\hat\Theta} (a p x p matrix, e.g.
 from \code{\link[=Theta.hat]{Theta.hat()}}) to avoid recomputing it. Note that supplying it skips
-the random draw of the nodewise cross-validation folds.}
+the random draw of the nodewise cross-validation folds, and that
+\code{nodewise} is then not used: the tuning rule is the one \code{Theta} was
+computed with. \code{\link[=Theta.hat]{Theta.hat()}} records it (attribute \code{"nodewise"}), and a
+warning is given when \code{nodewise} is supplied explicitly and differs.}
 
 \item{parallel, ncores}{Compute the nodewise regressions in parallel on
 \code{ncores} cores (forking; not on Windows). This does not change the
@@ -67,13 +71,27 @@ estimation of \eqn{\Theta}.
 
 SILM 1.0.0 obtained \eqn{\Theta} from an internal function of the 'hdi'
 package. With hdi 0.1-6, current when SILM 1.0.0 was released (January
-2019), the tuning parameter was the cross-validated lambda (\code{"cv"}). hdi
-0.1-7 (March 2019) changed the default of that internal function to the
-Z&Z rule, so from then until SILM was archived (July 2026) SILM computed
-\code{nodewise = "ZnZ"} without saying so. SILM now follows the paper by
-default; use \code{nodewise = "ZnZ"} to reproduce results obtained with SILM
-1.0.0 and hdi 0.1-7 to 0.1-10. Both settings reproduce the respective
-archived versions exactly (same numbers under the same random seed).
+2019), the tuning parameter was the cross-validated lambda described in
+Zhang and Cheng (2017, Section 5) (\code{"cv"}). hdi 0.1-7 (March 2019)
+silently changed the default of that internal function to the Z&Z rule,
+so from then until SILM was archived (July 2026) SILM installations
+computed \code{nodewise = "ZnZ"} without saying so.
+
+The default \code{"ZnZ"} of SILM 2.0.0 was chosen by a pre-registered study
+that compared the two rules on the simulation designs of Zhang and Cheng
+(2017) and on stress designs, under a decision rule fixed in advance
+(calibration first, then power): TODO-DEFAULTS-NUMBERS (which metric
+decided and by how much; see \code{validation/calibration/DEFAULTS.md} and
+\code{validation/calibration/defaults-results/REPORT.md} in the source
+repository). With the default, the results equal those of SILM 1.0.0 as
+installed from 2019 to 2026 (with hdi 0.1-7 to 0.1-10; for \code{ST()} together
+with \code{legacy = TRUE}). Use \code{nodewise = "cv"} for the tuning of the paper;
+it reproduces SILM 1.0.0 with hdi 0.1-6. Both settings reproduce the
+respective archived versions exactly (same numbers under the same random
+seed).
+
+\code{\link[=lasso.proj]{lasso.proj()}} and \code{\link[=boot.lasso.proj]{boot.lasso.proj()}} keep hdi's default for their
+nodewise residuals (\code{do.ZnZ = FALSE}, the cross-validated lambda).
 }
 
 \examples{

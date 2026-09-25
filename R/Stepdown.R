@@ -35,15 +35,16 @@
 #' Y <- X%*%beta+rt(n,4)/sqrt(2)
 #' Step(X, Y, M=500, alpha=0.05)
 #' @export
-Step <- function(X, Y, M = 500, alpha = 0.05, nodewise = c("cv", "ZnZ"), center = FALSE,
+Step <- function(X, Y, M = 500, alpha = 0.05, nodewise = c("ZnZ", "cv"), center = FALSE,
                  Theta = NULL, parallel = FALSE, ncores = getOption("mc.cores", 2L)) {
+  nodewise_given <- !missing(nodewise)
   nodewise <- match.arg(nodewise)
   data <- .prepare_xy(X, Y, center)
   .check_count(M)
   .check_level(alpha)
   X <- data$X
   fit <- .silm_fit(X, data$Y, nodewise, Theta, .check_flag(parallel, "parallel"), ncores,
-                   center = center)
+                   center = center, nodewise_given = nodewise_given)
   n <- fit$n
   p <- fit$p
   count.st <- count.nst <- rep(1,p)

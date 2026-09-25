@@ -48,9 +48,10 @@
 #' Y <- X%*%beta+rt(n,4)/sqrt(2)
 #' Sim.CI(X, Y, set)
 #' @export
-Sim.CI <- function(X, Y, set, M = 500, alpha = 0.95, nodewise = c("cv", "ZnZ"),
+Sim.CI <- function(X, Y, set, M = 500, alpha = 0.95, nodewise = c("ZnZ", "cv"),
                    center = FALSE, Theta = NULL, parallel = FALSE,
                    ncores = getOption("mc.cores", 2L)) {
+  nodewise_given <- !missing(nodewise)
   nodewise <- match.arg(nodewise)
   data <- .prepare_xy(X, Y, center)
   set <- .check_index_set(set, ncol(data$X), "set")
@@ -62,7 +63,7 @@ Sim.CI <- function(X, Y, set, M = 500, alpha = 0.95, nodewise = c("cv", "ZnZ"),
   }
   X <- data$X
   fit <- .silm_fit(X, data$Y, nodewise, Theta, .check_flag(parallel, "parallel"), ncores,
-                   center = center)
+                   center = center, nodewise_given = nodewise_given)
   n <- fit$n
   Theta <- fit$Theta
   sigma.sq <- fit$sigma.sq

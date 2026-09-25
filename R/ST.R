@@ -26,13 +26,14 @@
 #' @param M The number of bootstrap replications (default 500).
 #' @param alpha The significance level (default 0.05).
 #' @param nodewise Tuning rule for the nodewise lasso that estimates
-#'   \eqn{\Theta} on \eqn{D_2}: `"cv"` (default) or `"ZnZ"`; see [SR()].
+#'   \eqn{\Theta} on \eqn{D_2}: `"ZnZ"` (default) or `"cv"`; see [SR()].
 #' @param center Logical. If `TRUE`, `X.f` and `Y.f` are centred separately
 #'   within each sub-sample before screening and testing. The default `FALSE`
 #'   uses the data as given and warns when they do not appear to be centred.
-#' @param legacy Logical. If `TRUE`, reproduce SILM 1.0.0 exactly, including
-#'   three behaviours that were corrected in SILM 2.0.0: the decision of the
-#'   studentized test was spelled `"rejct"`; when `sub.size` left exactly
+#' @param legacy Logical. If `TRUE`, reproduce SILM 1.0.0 exactly (with the
+#'   matching `nodewise`; see "Nodewise tuning"), including three behaviours
+#'   that were corrected in SILM 2.0.0: the decision of the studentized test
+#'   was spelled `"rejct"`; when `sub.size` left exactly
 #'   \eqn{|D_2| - 1} variables selected by the screening lasso, one additional
 #'   variable was kept; and when no variable of `test.set` survived the
 #'   screening, the statistics were `-Inf` (now 0, with a warning).
@@ -67,7 +68,7 @@
 #' ST(X, Y, sub.size, test.set)
 #' @export
 ST <- function(X.f, Y.f, sub.size, test.set, M = 500, alpha = 0.05,
-               nodewise = c("cv", "ZnZ"), center = FALSE, legacy = FALSE,
+               nodewise = c("ZnZ", "cv"), center = FALSE, legacy = FALSE,
                parallel = FALSE, ncores = getOption("mc.cores", 2L)) {
   nodewise <- match.arg(nodewise)
   X.f <- .check_X(X.f, "X.f")

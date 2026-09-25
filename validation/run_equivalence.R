@@ -7,9 +7,18 @@
 #
 #   --self-test     new side = current repository code that still depends on
 #                   the archived packages (harness sanity check before the
-#                   dependencies are removed); only "znz" scenarios are run.
-#   --no-new-args   call the new functions with the old signatures only
-#                   ("znz" scenarios; used before the nodewise argument exists).
+#                   dependencies are removed); only "znz" scenarios are run,
+#                   without any SILM-only argument.
+#   --no-new-args   do not pass `nodewise` (the other SILM-only arguments
+#                   needed for an exact comparison are still passed: legacy =
+#                   TRUE for ST(), and the new_args of the hdi scenarios);
+#                   checks that the default nodewise = "ZnZ" reproduces SILM
+#                   1.0.0 as installed 2019-2026 (lib-legacy-znz). Only "znz"
+#                   scenarios are run, and the report name ends in
+#                   "-default-nodewise". Without this flag every core scenario
+#                   names its nodewise rule explicitly and does not depend on
+#                   the default. For code without these arguments use
+#                   --self-test.
 #   --with-legacy-deps  also give the new side access to the archived packages
 #                   (needed while the repository still declares them).
 #   --glmnet cran   use the current CRAN glmnet from lib-glmnet-5.0 (default);
@@ -51,7 +60,8 @@ parse_args <- function(args) {
 all_scenarios <- function(opt) {
   sc <- list()
   if (exists("unit_scenarios") && !opt$self_test) sc <- c(sc, unit_scenarios(opt$tier))
-  sc <- c(sc, core_scenarios(opt$tier, opt$modes, opt$self_test || opt$no_new_args, opt$st_legacy))
+  sc <- c(sc, core_scenarios(opt$tier, opt$modes, self_test = opt$self_test,
+                             st_legacy = opt$st_legacy, default_nodewise = opt$no_new_args))
   if (exists("hdi_scenarios") && !opt$self_test) sc <- c(sc, hdi_scenarios(opt$tier))
   if (!is.null(opt$only)) sc <- Filter(function(s) grepl(opt$only, s$id), sc)
   sc
@@ -92,8 +102,8 @@ main <- function() {
   )
   dir.create(opt$report_dir, showWarnings = FALSE, recursive = TRUE)
   stamp <- format(Sys.time(), "%Y%m%d-%H%M")
-  base <- file.path(opt$report_dir, sprintf("equivalence-%s-%s%s", opt$tier, stamp,
-                                            if (opt$self_test) "-selftest" else ""))
+  suffix <- if (opt$self_test) "-selftest" else if (opt$no_new_args) "-default-nodewise" else ""
+  base <- file.path(opt$report_dir, sprintf("equivalence-%s-%s%s", opt$tier, stamp, suffix))
   tab <- write_report(runs, paste0(base, ".md"), meta)
   saveRDS(list(meta = meta, runs = runs), file.path(silm_dev_path("reports"), paste0(basename(base), ".rds")))
   print(tab, row.names = FALSE)

@@ -21,9 +21,10 @@
 # so they are computed once per replication by st_three_step() below, which
 # follows ST() line by line with SILM's internal helpers and replays the same
 # bootstrap draws for each G. Started from the same RNG state it returns
-# exactly what ST(X, Y, sub.size, test.set = G, alpha = a) returns; this is
-# checked against ST() itself in the first replication of every cell
-# (code-check row "Share of ST() calls reproduced exactly").
+# exactly what ST(X, Y, sub.size, test.set = G, alpha = a, nodewise =
+# S$nodewise) returns; this is checked against ST() itself in the first
+# replication of every cell (code-check row "Share of ST() calls reproduced
+# exactly").
 #
 # Screening (Section 5.3, p. 25): SILM's ST() always uses the "remedy" (cross-
 # validated lasso on D1, completed by marginal screening of the lasso
@@ -56,8 +57,9 @@ quiet_grouped <- function(expr) {
 }
 
 # Three-step procedure of ST() (R/ST.R, SILM 2.x, legacy = FALSE,
-# center = FALSE, parallel = FALSE) for several test sets and levels.
-st_three_step <- function(X.f, Y.f, sub.size, test.sets, M, alphas) {
+# center = FALSE, parallel = FALSE) for several test sets and levels, with the
+# nodewise rule of the ST() call it is checked against.
+st_three_step <- function(X.f, Y.f, sub.size, test.sets, M, alphas, nodewise) {
   n <- nrow(X.f)
   # Step 1: sample splitting.
   n1 <- SILM:::.st_subsample_size(sub.size, n)
@@ -71,7 +73,8 @@ st_three_step <- function(X.f, Y.f, sub.size, test.sets, M, alphas) {
   # Step 3 (.st_test): de-biased lasso on D2.
   X <- X.f[-S1, screen.set, drop = FALSE]
   Y <- Y.f[-S1]
-  node <- SILM:::.nodewise(X, what = "Theta", do_znz = FALSE, parallel = FALSE, ncores = 1L)
+  node <- SILM:::.nodewise(X, what = "Theta", do_znz = identical(nodewise, "ZnZ"),
+                           parallel = FALSE, ncores = 1L)
   Theta <- node$out
   Gram <- t(X) %*% X / n0
   sreg <- SILM:::.scaled_lasso(X, Y)
@@ -131,7 +134,7 @@ one_rep <- function(r, model, X, Theta, beta, err) {
   st_seed <- sample.int(.Machine$integer.max, 1L)
   sub.size <- model$c0 * n
   set.seed(st_seed)
-  three <- st_three_step(X, Y, sub.size, sets, S$M, alphas)
+  three <- st_three_step(X, Y, sub.size, sets, S$M, alphas, S$nodewise)
   for (j in seq_along(sets)) {
     for (k in seq_along(alphas)) {
       for (stat in c("NST", "ST")) {

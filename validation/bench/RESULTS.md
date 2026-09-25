@@ -1,7 +1,9 @@
 # Performance notes
 
 Machine: Apple silicon (10 cores), R 4.5.2, OpenBLAS 0.3.30 (1 thread),
-glmnet 5.1. Data: n = 100, p = 500, Toeplitz(0.9) design.
+glmnet 5.1. Data: n = 100, p = 500, Toeplitz(0.9) design. Theta was timed
+with `nodewise = "cv"` (the default at the time; the default is now
+`"ZnZ"`).
 
 ## SILM core (validation/bench/bench_core.R)
 

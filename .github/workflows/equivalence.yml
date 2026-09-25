@@ -61,11 +61,23 @@ jobs:
       - name: Run equivalence harness
         run: Rscript validation/run_equivalence.R --tier "$TIER" --glmnet user --cores 4 --only "${{ matrix.shard }}"
 
+      # The scenarios above name the nodewise rule explicitly. --no-new-args
+      # leaves it at its default ("ZnZ"), which must reproduce SILM 1.0.0 with
+      # hdi 0.1-10 (lib-legacy-znz); run it for the shards with B-*-znz cases.
+      - name: Check the default nodewise against SILM 1.0.0 with hdi 0.1-10
+        if: ${{ !cancelled() && contains(fromJSON('[".", "^B-SR|^B-Step", "^B-SimCI-znz", "^B-ST-znz"]'), matrix.shard) }}
+        run: |
+          only='${{ matrix.shard }}'
+          if [ "$only" = "." ]; then only='^B-'; fi
+          Rscript validation/run_equivalence.R --tier "$TIER" --glmnet user --cores 4 --no-new-args --only "$only"
+
       - name: Job summary
         if: always()
         run: |
-          f=$(ls -t validation/reports/equivalence-*.md 2>/dev/null | head -1)
-          if [ -n "$f" ]; then cat "$f" >> "$GITHUB_STEP_SUMMARY"; fi
+          # The reports written by this job (the committed ones are tracked).
+          for f in $(git ls-files --others --exclude-standard -- 'validation/reports/equivalence-*.md' | sort); do
+            cat "$f" >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - uses: actions/upload-artifact@v4
         if: always()

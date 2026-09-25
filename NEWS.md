@@ -20,24 +20,35 @@ which were available only in the archived 'hdi'.
   random number state under the same seed). This is verified continuously
   against the archived CRAN packages (`validation/`, and the `equivalence`
   GitHub workflow).
+* New argument `nodewise = c("ZnZ", "cv")` for `SR()`, `ST()`, `Sim.CI()`,
+  `Step()` and `Theta.hat()`: the tuning rule of the nodewise lasso is now
+  explicit. SILM 1.0.0 took the nodewise lasso from an internal function of
+  'hdi' and did not set its tuning rule. With hdi 0.1-6, current when SILM
+  1.0.0 was published (January 2019), that was the cross-validated lambda
+  described in Zhang and Cheng (2017, Section 5). hdi 0.1-7 (March 2019)
+  silently changed it to the Z&Z rule, so SILM 1.0.0 installations used Z&Z
+  from then until SILM was archived. The default `"ZnZ"` was chosen by a
+  pre-registered study of both rules (`validation/calibration/DEFAULTS.md`;
+  results in `validation/calibration/defaults-results/REPORT.md`) under its
+  fixed decision rule (calibration first, then power): TODO-DEFAULTS-NUMBERS
+  (which metric decided and by how much). With the default (and
+  `legacy = TRUE` for `ST()`), results are those of SILM 1.0.0 as installed
+  from 2019 to 2026, so this is not a breaking change for them;
+  `nodewise = "cv"` gives the paper's tuning and reproduces SILM 1.0.0 with
+  hdi 0.1-6 (January to March 2019). The rule only matters when `p > n/2`
+  (and always for `ST()`). A `Theta` computed by `Theta.hat()` records its
+  rule, and `SR()`, `Sim.CI()` and `Step()` warn when it is used with a
+  different explicit `nodewise`.
 * The simulation studies of Zhang and Cheng (2017) and Dezeure, Bühlmann and
   Zhang (2017) were rerun against pre-registered criteria (`replication/`):
   629 of 684 headline criteria pass, and the papers' main qualitative
   conclusions are reproduced. The comparison is statistical (the papers'
   random draws cannot be recovered), and the Zhang and Cheng targets come from
-  arXiv:1603.01295v1.
+  arXiv:1603.01295v1. The replication was run with the settings of the papers
+  and of hdi at the time (`nodewise = "cv"`, `robust.divisor = "n"`).
 
 ## Breaking changes
 
-* New argument `nodewise = c("cv", "ZnZ")` for `SR()`, `ST()`, `Sim.CI()` and
-  `Step()`. SILM 1.0.0 took the nodewise lasso from an internal function of
-  'hdi' and did not set its tuning rule. With hdi 0.1-6, current when SILM
-  1.0.0 was published (January 2019), that was the cross-validated lambda
-  described in Zhang and Cheng (2017, Section 5). hdi 0.1-7 (March 2019)
-  changed the default to the Z&Z rule, so from then until SILM was archived,
-  SILM silently used Z&Z. The default is now `"cv"`, following the paper and
-  SILM 1.0.0 as released; `nodewise = "ZnZ"` reproduces results obtained with
-  hdi 0.1-7 to 0.1-10. This only matters when `p > n/2` (and always for `ST()`).
 * `ST()`: the decision of the studentized test was spelled `"rejct"`; it is
   now `"reject"`. Two deviations from the paper were corrected: with exactly
   |D2| - 1 variables selected by the screening lasso, one extra variable was
