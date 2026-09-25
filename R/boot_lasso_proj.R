@@ -25,7 +25,8 @@
 #' zero), with the same resampled errors.
 #'
 #' The paper recommends the robust standard error (`robust = TRUE`) in
-#' practice, and the wild bootstrap under heteroscedastic errors.
+#' practice, and the wild bootstrap under heteroscedastic errors. The default
+#' `robust = FALSE` is kept for compatibility with hdi.
 #'
 #' @section Compatibility with hdi 0.1-10:
 #' For the same data, arguments and random seed, `boot.lasso.proj()` returns
@@ -49,7 +50,8 @@
 #' bootstrap fits (a warning is given); `boot.shortcut` has no effect with
 #' `betainit = "scaled lasso"` (a warning is given) and uses glmnet's linear
 #' interpolation along its lambda path; the robust standard error uses the
-#' divisor n (Dezeure, Bühlmann and Zhang, 2017, Section 3.3.2); the
+#' divisor n (Dezeure, Bühlmann and Zhang, 2017, Section 3.3.2; see
+#' `robust.divisor` for the n - s divisor of their equation 5); the
 #' individual p-values are (2 c + 1) / (B + 1), where c is the smaller of the
 #' two tail counts of the bootstrap distribution.
 #'
@@ -111,7 +113,8 @@
 #'   \eqn{T^*_j = (\hat b^*_j - \hat\beta_j)/\hat{s.e.}^*_j}{T*_j = (b*_j - betahat_j)/se*_j}
 #'   is the studentized centred bootstrap statistic, and the same under the
 #'   complete null hypothesis, on the scale of `bhat`, as in hdi), followed by
-#'   the SILM additions `boot.type`, `multiplier`, `robust`, `gaussian.stub`,
+#'   the SILM additions `boot.type`, `multiplier`, `robust`, `robust.divisor`,
+#'   `gaussian.stub`,
 #'   `B.eff` (number of bootstrap samples used; smaller than `B` only when
 #'   xyz-paired samples had to be discarded), `tstat` (the studentized
 #'   statistics \eqn{\hat b_j/\hat{s.e.}_j}{b_j / se_j}), `boot.summary` (per

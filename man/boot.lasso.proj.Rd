@@ -112,7 +112,8 @@ with the elements of hdi's result, in the same order, \code{pval},
 \eqn{T^*_j = (\hat b^*_j - \hat\beta_j)/\hat{s.e.}^*_j}{T*_j = (b*_j - betahat_j)/se*_j}
 is the studentized centred bootstrap statistic, and the same under the
 complete null hypothesis, on the scale of \code{bhat}, as in hdi), followed by
-the SILM additions \code{boot.type}, \code{multiplier}, \code{robust}, \code{gaussian.stub},
+the SILM additions \code{boot.type}, \code{multiplier}, \code{robust}, \code{robust.divisor},
+\code{gaussian.stub},
 \code{B.eff} (number of bootstrap samples used; smaller than \code{B} only when
 xyz-paired samples had to be discarded), \code{tstat} (the studentized
 statistics \eqn{\hat b_j/\hat{s.e.}_j}{b_j / se_j}), \code{boot.summary} (per
@@ -142,7 +143,8 @@ second bootstrap under the complete null hypothesis (all coefficients
 zero), with the same resampled errors.
 
 The paper recommends the robust standard error (\code{robust = TRUE}) in
-practice, and the wild bootstrap under heteroscedastic errors.
+practice, and the wild bootstrap under heteroscedastic errors. The default
+\code{robust = FALSE} is kept for compatibility with hdi.
 }
 \section{Compatibility with hdi 0.1-10}{
 
@@ -169,7 +171,8 @@ affects the standard errors of the original fit, not those of the
 bootstrap fits (a warning is given); \code{boot.shortcut} has no effect with
 \code{betainit = "scaled lasso"} (a warning is given) and uses glmnet's linear
 interpolation along its lambda path; the robust standard error uses the
-divisor n (Dezeure, Bühlmann and Zhang, 2017, Section 3.3.2); the
+divisor n (Dezeure, Bühlmann and Zhang, 2017, Section 3.3.2; see
+\code{robust.divisor} for the n - s divisor of their equation 5); the
 individual p-values are (2 c + 1) / (B + 1), where c is the smaller of the
 two tail counts of the bootstrap distribution.
 }

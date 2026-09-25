@@ -21,9 +21,11 @@ which were available only in the archived 'hdi'.
   against the archived CRAN packages (`validation/`, and the `equivalence`
   GitHub workflow).
 * The simulation studies of Zhang and Cheng (2017) and Dezeure, Bühlmann and
-  Zhang (2017) were replicated against pre-registered criteria
-  (`replication/`): 629 of 684 criteria pass, and the papers' conclusions are
-  reproduced.
+  Zhang (2017) were rerun against pre-registered criteria (`replication/`):
+  629 of 684 headline criteria pass, and the papers' main qualitative
+  conclusions are reproduced. The comparison is statistical (the papers'
+  random draws cannot be recovered), and the Zhang and Cheng targets come from
+  arXiv:1603.01295v1.
 
 ## Breaking changes
 
@@ -55,6 +57,9 @@ which were available only in the archived 'hdi'.
 * All functions validate their inputs, with informative errors (singular Gram
   matrix, constant columns, missing values, wrong dimensions, ...), while
   accepting every input that SILM 1.0.0 processed.
+* `lasso.proj()` and `boot.lasso.proj()` reject a supplied `Z`, `sigma` or
+  numeric `betainit` with infinite values, and a supplied `Z` with a zero
+  normaliser t(Z_j) x_j / n. hdi returned meaningless p-values for them.
 
 ## New features
 
@@ -73,7 +78,10 @@ which were available only in the archived 'hdi'.
     `confint(fit, type = "simultaneous")`;
   * group tests via `groupTest()`;
   * Mammen multipliers for the wild bootstrap (`multiplier = "mammen"`);
-  * the xyz-paired bootstrap (`boot.type = "xyz"`).
+  * the xyz-paired bootstrap (`boot.type = "xyz"`);
+  * the n - s divisor of the robust standard error in equation (5)
+    (`robust.divisor = "n-s"`), applied to the original and all bootstrap
+    standard errors. The default `"n"` is hdi's.
 * `Theta.hat()` returns the matrix Theta used by `SR()`, `Sim.CI()` and
   `Step()`, and these functions accept a precomputed `Theta`.
 * `center = TRUE` centres the data; by default the data are used as given (as
