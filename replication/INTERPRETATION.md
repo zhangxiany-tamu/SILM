@@ -60,12 +60,14 @@ multipliers. To rule out an implementation error:
 
 * The two-point law has moments 0, 1, 1 and 2, and each value uses exactly
   one uniform draw (unit tests).
-* In a benign design (n = 100, p = 50, independent covariates, homoscedastic
-  Gaussian errors, B = 400, 100 replications), Mammen covered 0.924 and
-  Gaussian multipliers 0.939.
+* In benign designs with independent covariates, homoscedastic Gaussian
+  errors, B = 400 and 100 replications, Mammen multipliers came close to the
+  nominal level: 0.924 vs 0.939 with Gaussian multipliers at n = 100 and
+  p = 50, and 0.923 vs 0.951 at the example's own dimensions, n = 50 and
+  p = 250.
 
-The low coverage in the n = 50 example is therefore a finite-sample property of
-two-point multipliers in that setting, not a bug. With them, the bootstrap
+The low coverage in the example is therefore a finite-sample property of
+two-point multipliers under strong heteroscedasticity at n = 50, not a bug. With them, the bootstrap
 standard error varies strongly across bootstrap samples. The paper also reports
 no advantage of Mammen multipliers (p. 688). We recommend the default Gaussian
 multipliers.
