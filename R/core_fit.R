@@ -1,6 +1,5 @@
 # De-biased lasso fit shared by SR(), Sim.CI() and Step() (Zhang and Cheng,
-# 2017, Sections 2 and 5). The arithmetic is exactly that of SILM 1.0.0, so
-# results are unchanged.
+# 2017, Sections 2 and 5). The legacy scaled-lasso setting reproduces SILM 1.0.0.
 
 # Theta: inverse of the Gram matrix when p <= n/2, otherwise the nodewise
 # lasso estimate.
@@ -68,7 +67,7 @@
 
 # Scaled lasso, variance estimate, de-biased lasso and its variances.
 .silm_fit <- function(X, Y, nodewise, Theta = NULL, parallel = FALSE, ncores = 1L,
-                      center = FALSE, nodewise_given = FALSE) {
+                      center = FALSE, nodewise_given = FALSE, scaled.lasso = "equivariant") {
   n <- dim(X)[1]
   p <- dim(X)[2]
   Gram <- t(X)%*%X/n
@@ -80,7 +79,8 @@
     .strip_theta_attr(.check_theta(Theta, p))
   }
 
-  sreg <- .scaled_lasso(X, Y)
+  sreg <- .scaled_lasso(X, Y, scaled.lasso = scaled.lasso)
+  .check_estimated_noise(sreg$hsigma)
   beta.hat <- sreg$coefficients
   sigma.sq <- sum((Y-X%*%beta.hat)^2)/(n-sum(abs(beta.hat)>0))
   beta.db <- beta.hat+Theta%*%t(X)%*%(Y-X%*%beta.hat)/n

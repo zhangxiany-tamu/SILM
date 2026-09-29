@@ -10,7 +10,8 @@ groupTest(object, group, ...)
 \item{object}{A result of \code{\link[=boot.lasso.proj]{boot.lasso.proj()}}.}
 
 \item{group}{A group of coefficients (indices, names or a logical vector),
-or a list of groups.}
+or a list of groups. Names must identify coefficients unambiguously;
+use numeric indices when predictor names are duplicated.}
 
 \item{...}{Not used.}
 }

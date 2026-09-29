@@ -66,7 +66,8 @@
 #' @export
 Sim.CI <- function(X, Y, set, M = 500, alpha = 0.95, nodewise = c("ZnZ", "cv"),
                    center = FALSE, Theta = NULL, parallel = FALSE,
-                   ncores = getOption("mc.cores", 2L)) {
+                   ncores = getOption("mc.cores", 2L), scaled.lasso = c("equivariant", "legacy")) {
+  scaled.lasso <- match.arg(scaled.lasso)
   nodewise_given <- !missing(nodewise)
   nodewise <- match.arg(nodewise)
   data <- .prepare_xy(X, Y, center)
@@ -79,7 +80,7 @@ Sim.CI <- function(X, Y, set, M = 500, alpha = 0.95, nodewise = c("ZnZ", "cv"),
   }
   X <- data$X
   fit <- .silm_fit(X, data$Y, nodewise, Theta, .check_flag(parallel, "parallel"), ncores,
-                   center = center, nodewise_given = nodewise_given)
+                   center = center, nodewise_given = nodewise_given, scaled.lasso = scaled.lasso)
   n <- fit$n
   Theta <- fit$Theta
   sigma.sq <- fit$sigma.sq

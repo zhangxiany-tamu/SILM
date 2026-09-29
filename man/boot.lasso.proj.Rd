@@ -27,7 +27,8 @@ boot.lasso.proj(
   multiplier = c("gaussian", "mammen"),
   boot.H0c = identical(multiplecorr.method, "WY"),
   groups = NULL,
-  robust.divisor = c("n-s", "n")
+  robust.divisor = c("n-s", "n"),
+  scaled.lasso = c("equivariant", "legacy")
 )
 }
 \arguments{
@@ -92,7 +93,9 @@ needed for \code{\link[=groupTest]{groupTest()}}.}
 
 \item{groups}{Optional group (vector of indices or names) or list of groups
 for which bootstrap summaries are stored, so that simultaneous intervals
-and group tests for them are available without \code{return.bootdist = TRUE}.}
+and group tests for them are available without \code{return.bootdist = TRUE}.
+A character name must identify exactly one column; use numeric indices
+when predictor names are duplicated.}
 
 \item{robust.divisor}{Normalisation of the robust standard error, only
 used with \code{robust = TRUE}: \code{"n-s"} (default) is equation (5) of
@@ -115,6 +118,14 @@ design), at a mean power loss of 0.027 (see \code{validation/calibration/DEFAULT
 \code{lasso.proj()} it also applies to \code{family = "binomial"}
 (the linearised model) and to a numeric \code{betainit}, which the study did
 not cover.}
+
+\item{scaled.lasso}{Numerical solver when \code{betainit = "scaled lasso"}:
+\code{"equivariant"} (default) normalizes the response and uses a relative
+noise-level tolerance of \code{1e-8}; \code{"legacy"} reproduces scalreg 1.0.1's
+absolute tolerance \code{1e-4} and sensitivity to response units. The default
+can also slightly change ordinary-scale results. Ignored for other
+initial estimators. In \code{\link[=boot.lasso.proj]{boot.lasso.proj()}} the same setting is used for
+all bootstrap refits.}
 }
 \value{
 An object of class \code{c("silm_boot_lasso_proj", "silm_proj")}: a list
@@ -169,13 +180,17 @@ the divisor \eqn{n - \hat s}{n - s} of the paper's equation (5) by default
 \section{Compatibility with hdi 0.1-10}{
 
 For the same data, arguments and random seed (and \code{robust.divisor = "n"}
-if \code{robust = TRUE}), \code{boot.lasso.proj()} returns the same \code{pval},
+if \code{robust = TRUE}, and \code{scaled.lasso = "legacy"} if using scaled-lasso
+initialization), \code{boot.lasso.proj()} returns the same \code{pval},
 \code{pval.corr}, \code{bhat}, \code{se}, \code{betahat}, \code{sigmahat}, \code{lambda} and bootstrap
 distributions as \code{hdi::boot.lasso.proj()} run sequentially, and leaves the
 random number generator in the same state; this is verified against the
 archived hdi package (with the same version of glmnet). The differences
 are:
 \itemize{
+\item Scaled-lasso initialization and refits now use a response-normalized
+path and relative convergence tolerance. \code{scaled.lasso = "legacy"}
+restores the historical solver and its sensitivity to response units.
 \item \code{robust = TRUE}: the robust standard error of the original fit and of
 every bootstrap fit uses the divisor \eqn{n - \hat s}{n - s} of equation
 (5) of Dezeure, Bühlmann and Zhang (2017) by default

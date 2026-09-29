@@ -6,6 +6,14 @@
 
 .stop <- function(...) stop(..., call. = FALSE)
 
+.check_estimated_noise <- function(sigma) {
+  if (!is.finite(sigma) || sigma <= 0) {
+    .stop("The estimated noise level is zero or non-finite; inference requires a ",
+          "positive noise level. Check for a zero response or an exact fit.")
+  }
+  invisible(sigma)
+}
+
 .check_X <- function(X, arg = "X") {
   if (is.data.frame(X)) X <- as.matrix(X)
   # Logical matrices were used as 0/1 by SILM 1.0.0 and hdi.

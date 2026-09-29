@@ -15,7 +15,8 @@ ST(
   center = FALSE,
   legacy = FALSE,
   parallel = FALSE,
-  ncores = getOption("mc.cores", 2L)
+  ncores = getOption("mc.cores", 2L),
+  scaled.lasso = c("equivariant", "legacy")
 )
 }
 \arguments{
@@ -25,7 +26,9 @@ ST(
 
 \item{sub.size}{The size of the screening sub-sample \eqn{D_1}: a number
 of observations (\code{floor(sub.size)} is used), or a proportion of n if
-smaller than 1. Zhang and Cheng (2017) use n/5 to n/3.}
+smaller than 1. Must leave at least 3 observations for screening and 10
+for testing, for the cross-validation steps. Zhang and Cheng (2017) use
+n/5 to n/3.}
 
 \item{test.set}{The group of variables to be tested: column indices, or a
 logical vector of length p. Entries that are not column indices are
@@ -43,7 +46,8 @@ within each sub-sample before screening and testing. The default \code{FALSE}
 uses the data as given and warns when they do not appear to be centred.}
 
 \item{legacy}{Logical. If \code{TRUE}, reproduce SILM 1.0.0 exactly (with the
-matching \code{nodewise}; see "Nodewise tuning"), including three behaviours
+matching \code{nodewise} and \code{scaled.lasso = "legacy"}; see "Nodewise tuning"),
+including three behaviours
 that were corrected in SILM 2.0.0: the decision of the studentized test
 was spelled \code{"rejct"}; when \code{sub.size} left exactly
 \eqn{|D_2| - 1} variables selected by the screening lasso, one additional
@@ -55,6 +59,14 @@ screening, the statistics were \code{-Inf} (now 0, with a warning).}
 results. With a BLAS library that uses OpenMP threads, forked workers can
 occasionally stall; setting the environment variable \code{OMP_NUM_THREADS=1}
 before starting R avoids this.}
+
+\item{scaled.lasso}{Numerical solver for the scaled lasso. The default
+\code{"equivariant"} normalizes the response before building the lasso path
+and stops at a relative noise-level change of \code{1e-8}, so estimates and
+intervals scale with the response units. \code{"legacy"} reproduces
+scalreg 1.0.1's absolute tolerance \code{1e-4} and its sensitivity to response
+units; use it only to reproduce archived results. This setting can also
+change ordinary-scale results slightly because convergence is tighter.}
 }
 \value{
 A list of four elements, in this order (note that the names are
@@ -107,7 +119,8 @@ and \code{validation/calibration/defaults-results/REPORT.md} in the source repos
 the default, the results equal those of SILM 1.0.0 as
 installed from 2019 to 2026 (with hdi 0.1-7 to 0.1-10; for \code{ST()} together
 with \code{legacy = TRUE}). Use \code{nodewise = "cv"} for the tuning of the paper;
-it reproduces SILM 1.0.0 with hdi 0.1-6. Both settings reproduce the
+it reproduces SILM 1.0.0 with hdi 0.1-6. Exact archived reproduction also
+requires \code{scaled.lasso = "legacy"}. Both nodewise settings reproduce the
 respective archived versions exactly (same numbers under the same random
 seed).
 

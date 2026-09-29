@@ -12,6 +12,9 @@ run_fixture <- function(fx) {
   RNGkind("Mersenne-Twister", "Inversion", "Rejection")
   set.seed(20260924)
   fun <- getExportedValue("SILM", fx$fun)
+  # Historical reference data deliberately uses scalreg's absolute tolerance.
+  # Default solver correctness and response equivariance are tested separately.
+  fx$new_args$scaled.lasso <- "legacy"
   if (fx$fun %in% c("lasso.proj", "boot.lasso.proj")) {
     # hdi divided the robust standard error by n; SILM's default
     # robust.divisor is "n-s" (equation 5 of Dezeure, Buehlmann and Zhang).

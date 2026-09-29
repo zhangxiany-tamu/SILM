@@ -87,14 +87,17 @@ st_calls <- function(cell) {
 
 # Functions executed in the child processes (namespace-qualified only).
 old_SR <- function(d, a) SILM::SR(d$X, d$Y)
-new_SR <- function(d, a) do.call(SILM::SR, c(list(d$X, d$Y), a$new_args))
+new_SR <- function(d, a) do.call(SILM::SR, c(list(d$X, d$Y, scaled.lasso = "legacy"), a$new_args))
 old_SimCI <- function(d, a) SILM::Sim.CI(d$X, d$Y, a$set, M = a$M, alpha = a$alpha)
-new_SimCI <- function(d, a) do.call(SILM::Sim.CI, c(list(d$X, d$Y, a$set, M = a$M, alpha = a$alpha),
+new_SimCI <- function(d, a) do.call(SILM::Sim.CI, c(list(d$X, d$Y, a$set, M = a$M, alpha = a$alpha,
+                                                    scaled.lasso = "legacy"),
                                                     a$new_args))
 old_Step <- function(d, a) SILM::Step(d$X, d$Y, M = a$M, alpha = a$alpha)
-new_Step <- function(d, a) do.call(SILM::Step, c(list(d$X, d$Y, M = a$M, alpha = a$alpha), a$new_args))
+new_Step <- function(d, a) do.call(SILM::Step, c(list(d$X, d$Y, M = a$M, alpha = a$alpha,
+                                                  scaled.lasso = "legacy"), a$new_args))
 old_ST <- function(d, a) SILM::ST(d$X, d$Y, a$sub.size, a$test.set, M = a$M)
-new_ST <- function(d, a) do.call(SILM::ST, c(list(d$X, d$Y, a$sub.size, a$test.set, M = a$M),
+new_ST <- function(d, a) do.call(SILM::ST, c(list(d$X, d$Y, a$sub.size, a$test.set, M = a$M,
+                                              scaled.lasso = "legacy"),
                                              a$new_args))
 
 with_new_args <- function(cases, new_args) {

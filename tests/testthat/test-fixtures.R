@@ -29,7 +29,7 @@ test_that("results reproduce the archived SILM 1.0.0 / hdi 0.1-10 / scalreg 1.0.
   }
 })
 
-test_that("the default nodewise reproduces SILM 1.0.0 as installed 2019-2026 (hdi 0.1-10)", {
+test_that("default nodewise with legacy scaled lasso reproduces SILM 1.0.0 (hdi 0.1-10)", {
   skip_on_cran()
   files <- grep("-znz\\.rds$", fixture_files(), value = TRUE)
   expect_length(files, 8)

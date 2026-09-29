@@ -19,7 +19,9 @@
 #' @param Y.f Response variable (length n).
 #' @param sub.size The size of the screening sub-sample \eqn{D_1}: a number
 #'   of observations (`floor(sub.size)` is used), or a proportion of n if
-#'   smaller than 1. Zhang and Cheng (2017) use n/5 to n/3.
+#'   smaller than 1. Must leave at least 3 observations for screening and 10
+#'   for testing, for the cross-validation steps. Zhang and Cheng (2017) use
+#'   n/5 to n/3.
 #' @param test.set The group of variables to be tested: column indices, or a
 #'   logical vector of length p. Entries that are not column indices are
 #'   ignored with a warning (SILM 1.0.0 ignored them silently).
@@ -31,7 +33,8 @@
 #'   within each sub-sample before screening and testing. The default `FALSE`
 #'   uses the data as given and warns when they do not appear to be centred.
 #' @param legacy Logical. If `TRUE`, reproduce SILM 1.0.0 exactly (with the
-#'   matching `nodewise`; see "Nodewise tuning"), including three behaviours
+#'   matching `nodewise` and `scaled.lasso = "legacy"`; see "Nodewise tuning"),
+#'   including three behaviours
 #'   that were corrected in SILM 2.0.0: the decision of the studentized test
 #'   was spelled `"rejct"`; when `sub.size` left exactly
 #'   \eqn{|D_2| - 1} variables selected by the screening lasso, one additional
@@ -69,7 +72,9 @@
 #' @export
 ST <- function(X.f, Y.f, sub.size, test.set, M = 500, alpha = 0.05,
                nodewise = c("ZnZ", "cv"), center = FALSE, legacy = FALSE,
-               parallel = FALSE, ncores = getOption("mc.cores", 2L)) {
+               parallel = FALSE, ncores = getOption("mc.cores", 2L),
+               scaled.lasso = c("equivariant", "legacy")) {
+  scaled.lasso <- match.arg(scaled.lasso)
   nodewise <- match.arg(nodewise)
   X.f <- .check_X(X.f, "X.f")
   Y.f <- .check_Y(Y.f, nrow(X.f), "Y.f")
@@ -108,17 +113,19 @@ ST <- function(X.f, Y.f, sub.size, test.set, M = 500, alpha = 0.05,
     X <- centred$X
     Y <- centred$Y
   }
-  .st_test(X, Y, n0, screen.set, test.set, M, alpha, nodewise, legacy, parallel, ncores)
+  .st_test(X, Y, n0, screen.set, test.set, M, alpha, nodewise, legacy, parallel, ncores,
+           scaled.lasso)
 }
 
 .st_test <- function(X, Y, n0, screen.set, test.set, M, alpha, nodewise, legacy,
-                     parallel, ncores) {
+                     parallel, ncores, scaled.lasso = "equivariant") {
   node <- .nodewise(X, what = "Theta", do_znz = identical(nodewise, "ZnZ"),
                     parallel = parallel, ncores = ncores)
   Theta <- node$out
   Gram<-t(X)%*%X/n0
 
-  sreg <- .scaled_lasso(X,Y)
+  sreg <- .scaled_lasso(X, Y, scaled.lasso = scaled.lasso)
+  .check_estimated_noise(sreg$hsigma)
   beta.hat <- sreg$coefficients
   sigma.sq <- sum((Y-X%*%beta.hat)^2)/(n0-sum(abs(beta.hat)>0))
   test.set.i <- intersect(screen.set,test.set)

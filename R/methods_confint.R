@@ -49,12 +49,14 @@
 #'
 #' @param object A result of [lasso.proj()] or [boot.lasso.proj()].
 #' @param parm Coefficients (indices or names) for which intervals are
-#'   returned; by default all coefficients (or all of `group`).
+#'   returned; by default all coefficients (or all of `group`). Use numeric
+#'   indices when predictor names are duplicated; a name must identify one
+#'   coefficient unambiguously.
 #' @param level Confidence level (joint level for simultaneous intervals).
 #' @param type `"individual"` (default) or `"simultaneous"`.
 #' @param group For simultaneous intervals: the group \eqn{G} of coefficients
 #'   covered jointly (indices, names or a logical vector); must contain
-#'   `parm`. Defaults to `parm`.
+#'   `parm`. Defaults to `parm`. Names must identify coefficients unambiguously.
 #' @param simult.stat `"maxmin"` (default; eq. 10) or `"abs"`.
 #' @param ... Not used.
 #' @return A matrix with columns `lower` and `upper` and one row per
@@ -80,7 +82,8 @@ confint.silm_proj <- function(object, parm, level = 0.95,
   type <- match.arg(type)
   stat_given <- !missing(simult.stat)
   simult.stat <- match.arg(simult.stat)
-  if (!is.numeric(level) || length(level) != 1L || !(level > 0 && level < 1)) {
+  if (!is.numeric(level) || is.complex(level) || length(level) != 1L ||
+      !is.finite(level) || !(level > 0 && level < 1)) {
     .stop("'level' must be a number between 0 and 1.")
   }
   pnames <- if (is.null(names(object$bhat))) seq_along(object$bhat) else names(object$bhat)
@@ -92,27 +95,33 @@ confint.silm_proj <- function(object, parm, level = 0.95,
     warning("'group' and 'simult.stat' are only used with type = \"simultaneous\".",
             call. = FALSE)
   }
-  parm <- if (missing(parm)) pnames else .resolve_parm(parm, pnames)
-  .confint_individual(object, parm, level)
+  idx <- if (missing(parm)) seq_along(pnames) else .resolve_parm(parm, pnames)
+  .confint_individual(object, idx, level, pnames)
 }
 
 # Coefficients by name, or by index with R's subsetting semantics (as hdi's
-# confint.hdi: negative indices exclude, 0 is dropped).
+# confint.hdi: negative indices exclude, 0 is dropped). Always return integer
+# positions: converting indices to names loses identity when names repeat.
 .resolve_parm <- function(parm, pnames) {
   if (is.numeric(parm)) {
     if (!length(parm) || anyNA(parm) || any(abs(parm) >= length(pnames) + 1) ||
         (any(parm < 0) && any(parm > 0))) {
       .stop("'parm' must contain indices between 1 and ", length(pnames), ".")
     }
-    out <- pnames[parm]
+    out <- seq_along(pnames)[parm]
     if (!length(out)) .stop("'parm' selects no coefficient.")
     return(out)
   }
-  if (is.character(parm) && all(parm %in% pnames)) return(parm)
+  if (is.character(parm) && length(parm) && !anyNA(parm) && all(parm %in% pnames)) {
+    if (any(parm %in% pnames[duplicated(pnames)])) {
+      .stop("Ambiguous coefficient names in 'parm'; use numeric indices for duplicated names.")
+    }
+    return(match(parm, pnames))
+  }
   .stop("'parm' must be coefficient indices or names.")
 }
 
-.confint_individual <- function(object, parm, level) {
+.confint_individual <- function(object, parm, level, pnames) {
   obj <- object$bhat
   if (object$method == "lasso.proj") {
     quant <- qnorm(1 - (1 - level) / 2)
@@ -129,7 +138,7 @@ confint.silm_proj <- function(object, parm, level = 0.95,
                    type = quantile.type)
     m <- cbind(obj[parm] - qstar[2, parm], obj[parm] - qstar[1, parm])
   }
-  dimnames(m) <- list(parm, c("lower", "upper"))
+  dimnames(m) <- list(pnames[parm], c("lower", "upper"))
   m
 }
 
@@ -146,7 +155,7 @@ confint.silm_proj <- function(object, parm, level = 0.95,
   pn <- names(object$bhat)
   # Rows in the order of `parm` (as for individual intervals); the group
   # defaults to the coefficients in `parm`.
-  idx <- if (is.null(parm)) NULL else match(.resolve_parm(parm, pnames), pnames)
+  idx <- if (is.null(parm)) NULL else .resolve_parm(parm, pnames)
   G <- if (!is.null(group)) {
     .resolve_group(group, p, pn, "group")
   } else if (!is.null(idx)) {

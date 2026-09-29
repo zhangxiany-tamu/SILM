@@ -43,6 +43,7 @@ run_proj <- function(pkg, d, a) {
   if (!is.null(a$Z_from)) {
     # Z computed by a first call with return.Z = TRUE (same package).
     zargs <- a$Z_from
+    if (pkg == "SILM") zargs$scaled.lasso <- "legacy"
     if (pkg == "SILM" && is.null(zargs$robust.divisor)) zargs$robust.divisor <- "n"
     zfit <- do.call(fun, c(list(d$x, y), zargs, list(return.Z = TRUE)))
     args$Z <- zfit$Z
@@ -52,6 +53,7 @@ run_proj <- function(pkg, d, a) {
     # and Zhang, 2017); hdi divided by n. Pass "n" unless the scenario sets it,
     # so that every scenario stays an exact comparison with hdi.
     new_args <- a$new_args
+    new_args$scaled.lasso <- "legacy"
     if (is.null(new_args$robust.divisor)) new_args$robust.divisor <- "n"
     args <- c(args, new_args)
   }

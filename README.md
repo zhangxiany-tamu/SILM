@@ -98,17 +98,27 @@ the paper's Toeplitz design), at a mean power loss of 0.027
 
 ## Reproducibility and correctness
 
+The development version fixes response-unit sensitivity in the scaled lasso.
+It uses response normalization and relative convergence by default; ordinary
+results may also change slightly. Use `scaled.lasso = "legacy"` when reproducing
+archived results with `SR()`, `ST()`, `Sim.CI()` or `Step()`, or with
+`betainit = "scaled lasso"` in the projection functions. This explicitly retains
+the historical numerical defect. The calibration and replication figures below
+were computed with the historical solver and have not been rerun for this fix.
+
 * **Archived versions.** Every result of SILM 1.0.0 and of hdi 0.1-10's
   `lasso.proj()`/`boot.lasso.proj()` can be reproduced exactly (same numbers
   and random-number state under the same seed). The source repository runs
   the archived CRAN packages and the current code side by side and compares
-  them with `identical()` (`validation/`; the *equivalence* workflow above).
+  them with `identical()` using the legacy solver (`validation/`; the
+  *equivalence* workflow above).
 * **SILM 1.0.0 and hdi versions.** SILM 1.0.0 computed different results
   depending on the installed version of hdi: with hdi 0.1-6 (January to March
   2019) its nodewise lasso used the cross-validated tuning parameter described
   in the paper; hdi 0.1-7 (March 2019) silently switched it to the Z&Z rule.
   SILM 2.0.0 makes the rule explicit. Its default, `nodewise = "ZnZ"`, gives
-  the results of 2019 to 2026 (for `ST()` with `legacy = TRUE`) and was
+  the results of 2019 to 2026 with `scaled.lasso = "legacy"`
+  (for `ST()` also with `legacy = TRUE`) and was
   chosen by a pre-registered study under its fixed decision rule (calibration
   first, then power): over 20 `Sim.CI()`/`Step()` settings, 8 `SR()` settings
   and 3 `ST()` settings (200 replications each), `"ZnZ"` halved the mean
@@ -158,7 +168,8 @@ doi:10.1007/s11749-017-0554-2
 The nodewise lasso, `lasso.proj()` and `boot.lasso.proj()` are adapted from
 the 'hdi' package by Lukas Meier, Ruben Dezeure, Nicolai Meinshausen, Martin
 Mächler and Peter Bühlmann (GPL). The scaled lasso follows Sun and Zhang
-(2012, 2013) and reproduces the archived 'scalreg' package by Tingni Sun.
+(2012, 2013); its legacy setting reproduces the archived 'scalreg' package
+by Tingni Sun.
 
 ## License
 

@@ -1,0 +1,53 @@
+Installing the working tree into /private/tmp/silm-fixes-20260929/cache/lib-new
+Running 23 scenarios (662 cases) on 4 cores, tier 'fast'
+                     scenario cases  E0 ALLOWED OLD_ERROR BOTH_ERROR FAIL
+              A1-scaled-lasso    60  60       0         0          0    0
+               A2-standardize    10  10       0         0          0    0
+        A3-nodewise-hdi0.1-10     8   8       0         0          0    0
+         A3-nodewise-hdi0.1-6     4   4       0         0          0    0
+                     B-SR-znz    14  14       0         0          0    0
+                      B-SR-cv    14  14       0         0          0    0
+                  B-SimCI-znz   112 112       0         0          0    0
+                   B-SimCI-cv   112 112       0         0          0    0
+                   B-Step-znz    28  28       0         0          0    0
+                    B-Step-cv    28  28       0         0          0    0
+                     B-ST-znz    56  52       0         4          0    0
+                      B-ST-cv    56  52       0         4          0    0
+                 E-ST-E1-null    12   7       0         5          0    0
+             E-ST-E2-oversize     4   0       0         0          4    0
+           E-ST-E3-rd-example    36  34       0         2          0    0
+            E-ST-E4-singleton    12  12       0         0          0    0
+              V-SimCI-set-znz     8   8       0         0          0    0
+             V-SR-logical-znz     2   2       0         0          0    0
+               V-SimCI-set-cv     8   8       0         0          0    0
+              V-SR-logical-cv     2   2       0         0          0    0
+                 C-lasso.proj    48  48       0         0          0    0
+ C-lasso.proj-binomial-legacy     4   4       0         0          0    0
+            D-boot.lasso.proj    24  23       1         0          0    0
+ seeds_identical max_abs_diff seconds
+              60            0    10.2
+              10            0     1.8
+               8            0    14.5
+               4            0     6.8
+              14            0    55.4
+              14            0    48.5
+             112            0   441.4
+             112            0   388.2
+              28            0   110.5
+              28            0    96.0
+              52            0   212.4
+              52            0   190.7
+               7            0   117.6
+               4           NA     1.1
+              34            0    14.4
+              12            0   123.9
+               8            0    11.2
+               2            0     3.4
+               8            0    10.0
+               2            0     3.1
+              48            0    29.0
+               4            0     2.3
+              23            0    70.0
+Report: /private/tmp/silm-fixes-20260929/reports/equivalence-fast-20260929-1350.md
+Error: unexpected ',' in "basename(base),"
+Execution halted

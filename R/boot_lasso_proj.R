@@ -36,12 +36,16 @@
 #'
 #' @section Compatibility with hdi 0.1-10:
 #' For the same data, arguments and random seed (and `robust.divisor = "n"`
-#' if `robust = TRUE`), `boot.lasso.proj()` returns the same `pval`,
+#' if `robust = TRUE`, and `scaled.lasso = "legacy"` if using scaled-lasso
+#' initialization), `boot.lasso.proj()` returns the same `pval`,
 #' `pval.corr`, `bhat`, `se`, `betahat`, `sigmahat`, `lambda` and bootstrap
 #' distributions as `hdi::boot.lasso.proj()` run sequentially, and leaves the
 #' random number generator in the same state; this is verified against the
 #' archived hdi package (with the same version of glmnet). The differences
 #' are:
+#' * Scaled-lasso initialization and refits now use a response-normalized
+#'   path and relative convergence tolerance. `scaled.lasso = "legacy"`
+#'   restores the historical solver and its sensitivity to response units.
 #' * `robust = TRUE`: the robust standard error of the original fit and of
 #'   every bootstrap fit uses the divisor \eqn{n - \hat s}{n - s} of equation
 #'   (5) of Dezeure, Bühlmann and Zhang (2017) by default
@@ -136,6 +140,8 @@
 #' @param groups Optional group (vector of indices or names) or list of groups
 #'   for which bootstrap summaries are stored, so that simultaneous intervals
 #'   and group tests for them are available without `return.bootdist = TRUE`.
+#'   A character name must identify exactly one column; use numeric indices
+#'   when predictor names are duplicated.
 #' @return An object of class `c("silm_boot_lasso_proj", "silm_proj")`: a list
 #'   with the elements of hdi's result, in the same order, `pval`,
 #'   `pval.corr`, `sigmahat`, `standardize`, `sds`, `bhat`, `se`, `betahat`,
@@ -181,7 +187,9 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                             boot.type = if (wild) "wild" else "residual",
                             multiplier = c("gaussian", "mammen"),
                             boot.H0c = identical(multiplecorr.method, "WY"), groups = NULL,
-                            robust.divisor = c("n-s", "n")) {
+                            robust.divisor = c("n-s", "n"),
+                            scaled.lasso = c("equivariant", "legacy")) {
+  scaled.lasso <- match.arg(scaled.lasso)
   # (missing() is unreliable once an argument has been modified.)
   given <- c(wild = !missing(wild), boot.type = !missing(boot.type),
              multiplier = !missing(multiplier), robust.divisor = !missing(robust.divisor))
@@ -228,7 +236,8 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
   Z <- Zout$Z
   scaleZ <- Zout$scaleZ
 
-  initial.estimate <- initial.estimator(betainit = betainit, sigma = sigma, x = x, y = y)
+  initial.estimate <- initial.estimator(betainit = betainit, sigma = sigma, x = x, y = y,
+                                        scaled.lasso = scaled.lasso)
   betalasso <- initial.estimate$beta.lasso
   sigmahat <- initial.estimate$sigmahat
   r <- y - x %*% betalasso
@@ -242,20 +251,22 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
   compute <- function(ystar, boot.truth) {
     .boot_cbootdist(ystar = ystar, boot.truth = boot.truth, x = x, Z = Z, betainit = betainit,
                     lambda = lambda, robust = robust, parallel = parallel, ncores = ncores,
-                    divisor = robust.divisor)
+                    divisor = robust.divisor, scaled.lasso = scaled.lasso)
   }
 
   # Centred bootstrap distribution. The resampling draws are made here, as in
   # hdi; the bootstrap under the complete null hypothesis reuses them.
   if (gaussian.stub) {
-    cboot.dist <- replicate(B, rnorm(ncol(x)))
+    # replicate() simplifies to a vector when p = 1; bootstrap inference
+    # requires a p x B matrix even for a single supplied nodewise score.
+    cboot.dist <- matrix(replicate(B, rnorm(p)), nrow = p, ncol = B)
   } else if (boot.type == "xyz") {
     hats <- .xyz_hats(x, Z, betalasso, rc)
     index <- .xyz_index(nrow(x), B)
     compute_xyz <- function(yvec, truth) {
       .xyz_cbootdist(hats, index, yvec, truth, betainit = betainit, lambda = lambda,
                      robust = robust, parallel = parallel, ncores = ncores,
-                     divisor = robust.divisor)
+                     divisor = robust.divisor, scaled.lasso = scaled.lasso)
     }
     cboot.dist <- compute_xyz(hats$yhat, betalasso)
   } else {
@@ -269,7 +280,7 @@ boot.lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
   cboot.dist.underH0c <- NULL
   if (extras$boot.H0c) {
     cboot.dist.underH0c <- if (gaussian.stub) {
-      replicate(B, rnorm(ncol(x)))
+      matrix(replicate(B, rnorm(p)), nrow = p, ncol = B)
     } else if (boot.type == "xyz") {
       compute_xyz(hats$e, 0)
     } else {

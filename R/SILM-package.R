@@ -26,11 +26,13 @@
 #' are ports of the functions of the archived package 'hdi' (version 0.1-10).
 #' With `robust = TRUE` they use the \eqn{n - \hat s}{n - s} divisor of
 #' equation (5) of Dezeure, Bühlmann and Zhang (2017) by default;
-#' `robust.divisor = "n"` gives hdi's results.
+#' `robust.divisor = "n"` gives hdi's normalization. Scaled-lasso fits also
+#' require `scaled.lasso = "legacy"` for hdi's numerical results.
 #'
 #' @section Reproducibility:
-#' SILM 2.0.0 reproduces SILM 1.0.0 and hdi 0.1-10 exactly (the same numbers
-#' under the same random seed); see the sections "Nodewise tuning" in [SR()]
+#' Archived results can be reproduced with the historical solver selected by
+#' `scaled.lasso = "legacy"`; the default solver corrects response-unit
+#' sensitivity. See the sections "Nodewise tuning" in [SR()]
 #' and "Compatibility with hdi 0.1-10" in [lasso.proj()] and
 #' [boot.lasso.proj()] for the options that select older behaviour.
 #'
