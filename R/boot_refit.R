@@ -12,9 +12,9 @@
 
 # Studentized bootstrap statistics (b* - boot.truth) / se* (p x B matrix).
 .boot_cbootdist <- function(ystar, boot.truth, x, Z, betainit, lambda, robust, parallel,
-                            ncores, divisor) {
+                            ncores, divisor, scaled.lasso = "equivariant") {
   initstar <- boot.initial.fit(x = x, ystar = ystar, betainit = betainit, lambda = lambda,
-                               parallel = parallel, ncores = ncores)
+                               parallel = parallel, ncores = ncores, scaled.lasso = scaled.lasso)
   betainitstar <- do.call(cbind, lapply(initstar, function(out) out$betalasso))
   sigmahatstar <- sapply(initstar, function(out) out$sigmahat)
   bstar <- despars.lasso.est(x = x, y = ystar, Z = Z, betalasso = betainitstar)
@@ -25,11 +25,12 @@
 }
 
 # Initial lasso fit for each column of ystar (list of do.initial.fit() results).
-boot.initial.fit <- function(x, ystar, betainit, lambda, parallel, ncores) {
+boot.initial.fit <- function(x, ystar, betainit, lambda, parallel, ncores,
+                              scaled.lasso = "equivariant") {
   B <- ncol(ystar)
   fit_one <- function(b, foldid = NULL) {
     do.initial.fit(x = x, y = ystar[, b], initial.lasso.method = betainit, lambda = lambda,
-                   foldid = foldid)
+                   foldid = foldid, scaled.lasso = scaled.lasso)
   }
   n <- nrow(x)
   fold_fun <- if (identical(betainit, "cv lasso") && is.null(lambda)) {

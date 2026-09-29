@@ -1,12 +1,13 @@
 # Westfall-Young type multiple testing adjustment of lasso.proj().
 #
 # Adapted from 'hdi' 0.1-10 (R/helpers.R: p.adjust.wy; GPL, see
-# inst/COPYRIGHTS). Unchanged.
+# inst/COPYRIGHTS). A single simulation is kept as a one-row matrix.
 
 # Simulate the null distribution of the minimum p-value from a Gaussian with
 # covariance `cov` (here crossprod(Z)) and adjust the p-values by its ECDF.
 p.adjust.wy <- function(cov, pval, N = 10000) {
   zz <- MASS::mvrnorm(N, rep(0, ncol(cov)), cov)
+  if (N == 1L) zz <- matrix(zz, nrow = 1L)
   zz2 <- scale(zz, center = FALSE, scale = sqrt(diag(cov)))
   Gz <- apply(2 * pnorm(abs(zz2), lower.tail = FALSE), 1, min)
   ecdf(Gz)(pval)

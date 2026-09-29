@@ -127,6 +127,12 @@ lambda (`do.ZnZ = FALSE`).
 SILM 2.0.0 reproduces the archived SILM 1.0.0 and hdi 0.1-10 exactly (the
 same numbers under the same random seed):
 
+In the development version, exact archived replication additionally requires
+`scaled.lasso = "legacy"` for the four core inference functions and whenever
+`betainit = "scaled lasso"` is used in either projection function. The new
+default normalizes the response and uses relative convergence to fix response
+unit sensitivity. The legacy setting deliberately retains that defect.
+
 * `SR()`, `Sim.CI()`, `Step()`, `ST()`: results obtained with SILM 1.0.0 and
   hdi 0.1-7 to 0.1-10 (March 2019 to July 2026) are the default
   (`nodewise = "ZnZ"`, chosen by a pre-registered simulation study; see

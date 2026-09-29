@@ -1,0 +1,9 @@
+* checking for file ‘<workspace>/DESCRIPTION’ ... OK
+* preparing ‘SILM’:
+* checking DESCRIPTION meta-information ... OK
+* installing the package to build vignettes
+* creating vignettes ... OK
+* checking for LF line-endings in source and make files and shell scripts
+* checking for empty or unneeded directories
+Removed empty directory ‘SILM/tests/testthat/_snaps’
+* building ‘SILM_2.0.0.tar.gz’

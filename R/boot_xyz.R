@@ -23,12 +23,16 @@
 #   both the training and the test folds (which would bias lambda downwards).
 
 .xyz_hats <- function(x, Z, betalasso, e) {
-  s2 <- sum(e^2)
-  if (s2 <= length(e) * .Machine$double.eps) {
+  e.scale <- max(abs(e))
+  if (!is.finite(e.scale) || e.scale == 0) {
     .stop("The lasso residuals are (numerically) zero; the xyz-paired bootstrap is not defined.")
   }
-  xhat <- x - tcrossprod(e, crossprod(x, e)) / s2
-  zhat <- Z - tcrossprod(e, crossprod(Z, e)) / s2
+  # The projection depends only on the residual direction. Normalising first
+  # avoids an absolute response-unit cutoff and squaring very small/large e.
+  e.unit <- e / e.scale
+  s2 <- sum(e.unit^2)
+  xhat <- x - tcrossprod(e.unit, crossprod(x, e.unit)) / s2
+  zhat <- Z - tcrossprod(e.unit, crossprod(Z, e.unit)) / s2
   yhat <- as.vector(xhat %*% betalasso) + e
   list(xhat = xhat, zhat = zhat, yhat = yhat, e = e)
 }
@@ -46,7 +50,7 @@
 # Studentized statistics of one xyz bootstrap sample (NA if the sample has to
 # be discarded).
 .xyz_draw <- function(rows, hats, yvec, truth, betainit, lambda, robust, foldid = NULL,
-                      divisor) {
+                      divisor, scaled.lasso = "equivariant") {
   n <- length(rows)
   # The folds are drawn first, so that the random number stream does not
   # depend on which samples are discarded (parallel runs pre-draw them).
@@ -65,7 +69,7 @@
   }
   zs <- sweep(zs, 2, normaliser, "/")
   init <- do.initial.fit(x = xs, y = ys, initial.lasso.method = betainit, lambda = lambda,
-                         foldid = foldid)
+                         foldid = foldid, scaled.lasso = scaled.lasso)
   bs <- despars.lasso.est(x = xs, y = ys, Z = zs, betalasso = init$betalasso)
   ses <- if (robust) {
     se <- sandwich.var.est.stderr(x = xs, y = ys, betainit = init$betalasso, Z = zs)
@@ -79,9 +83,10 @@
 # p x B matrix of studentized statistics over the bootstrap samples in `index`
 # (NA columns for discarded samples). Folds are handled by .boot_map().
 .xyz_cbootdist <- function(hats, index, yvec, truth, betainit, lambda, robust, parallel,
-                           ncores, divisor) {
+                           ncores, divisor, scaled.lasso = "equivariant") {
   draw_one <- function(b, foldid = NULL) {
-    .xyz_draw(index[, b], hats, yvec, truth, betainit, lambda, robust, foldid, divisor)
+    .xyz_draw(index[, b], hats, yvec, truth, betainit, lambda, robust, foldid, divisor,
+              scaled.lasso = scaled.lasso)
   }
   fold_fun <- if (identical(betainit, "cv lasso") && is.null(lambda)) {
     function(b) .xyz_foldid(index[, b])

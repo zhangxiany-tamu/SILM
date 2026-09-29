@@ -44,7 +44,9 @@
 #' Step(X, Y, M=500, alpha=0.05)
 #' @export
 Step <- function(X, Y, M = 500, alpha = 0.05, nodewise = c("ZnZ", "cv"), center = FALSE,
-                 Theta = NULL, parallel = FALSE, ncores = getOption("mc.cores", 2L)) {
+                 Theta = NULL, parallel = FALSE, ncores = getOption("mc.cores", 2L),
+                 scaled.lasso = c("equivariant", "legacy")) {
+  scaled.lasso <- match.arg(scaled.lasso)
   nodewise_given <- !missing(nodewise)
   nodewise <- match.arg(nodewise)
   data <- .prepare_xy(X, Y, center)
@@ -52,7 +54,7 @@ Step <- function(X, Y, M = 500, alpha = 0.05, nodewise = c("ZnZ", "cv"), center 
   .check_level(alpha)
   X <- data$X
   fit <- .silm_fit(X, data$Y, nodewise, Theta, .check_flag(parallel, "parallel"), ncores,
-                   center = center, nodewise_given = nodewise_given)
+                   center = center, nodewise_given = nodewise_given, scaled.lasso = scaled.lasso)
   n <- fit$n
   p <- fit$p
   count.st <- count.nst <- rep(1,p)

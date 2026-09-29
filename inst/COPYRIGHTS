@@ -27,7 +27,7 @@ Parts of SILM are derived from other software:
 
 2. The scaled lasso (R/scaled_lasso.R) is an independent implementation of the
    algorithm of Sun and Zhang (2012, Biometrika 99:879-898) with the penalty
-   level of Sun and Zhang (2013, JMLR 14:3385-3418). Its numerical conventions
+   level of Sun and Zhang (2013, JMLR 14:3385-3418). Its legacy numerical conventions
    were chosen to agree with the archived 'scalreg' package (version 1.0.1,
    Copyright (C) Tingni Sun, GPL-2); no code of scalreg is included.
 

@@ -1,0 +1,3 @@
+     cases         E0    ALLOWED  OLD_ERROR BOTH_ERROR       FAIL
+       662        642          1         15          4          0
+All saved records are complete and consistent; current runner parses cleanly.

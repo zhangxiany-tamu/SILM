@@ -1,0 +1,82 @@
+"file","context","test","nb","failed","skipped","error","warning","user","system","real","passed"
+"test-boot-lasso-proj.R","boot-lasso-proj","boot.lasso.proj returns hdi's fields in order, plus summaries",6,0,FALSE,FALSE,0,0.629,0.012,0.651,6
+"test-boot-lasso-proj.R","boot-lasso-proj","bootstrap confidence intervals follow hdi's definition",4,0,FALSE,FALSE,0,0.959,0.00799999999999999,0.972,4
+"test-boot-lasso-proj.R","boot-lasso-proj","argument checks",4,0,FALSE,FALSE,0,0.33,0.002,0.334,4
+"test-boot-lasso-proj.R","boot-lasso-proj","parallel bootstrap equals the sequential one",1,0,FALSE,FALSE,0,1.203,0.075,2.006,1
+"test-boot-lasso-proj.R","boot-lasso-proj","print shows the settings and returns the object invisibly",4,0,FALSE,FALSE,0,0.992,0.027,1.025,4
+"test-boundary-regressions.R","boundary-regressions","ST rejects an impossible screening split before drawing the split",9,0,FALSE,FALSE,0,0.105,0.004,0.109,9
+"test-boundary-regressions.R","boundary-regressions","single-predictor Gaussian stubs retain bootstrap dimensions and values",42,0,FALSE,FALSE,0,0.0670000000000002,0.017,0.0839999999999996,42
+"test-boundary-regressions.R","boundary-regressions","Gaussian WY supports one Monte Carlo draw and one predictor",8,0,FALSE,FALSE,0,0.0280000000000005,0.00399999999999998,0.032,8
+"test-confint-indexing.R","confint-indexing","individual intervals preserve positions with duplicated predictor names",18,0,FALSE,FALSE,0,0.0330000000000004,0.005,0.0390000000000006,18
+"test-confint-indexing.R","confint-indexing","simultaneous intervals and their groups preserve coefficient positions",32,0,FALSE,FALSE,0,0.0810000000000004,0.012,0.093,32
+"test-confint-indexing.R","confint-indexing","group APIs require unambiguous names and accept numeric duplicate-label positions",4,0,FALSE,FALSE,0,0.0350000000000001,0.003,0.0380000000000003,4
+"test-confint-indexing.R","confint-indexing","unambiguous coefficient names retain order and allow repeated selection",3,0,FALSE,FALSE,0,0.00800000000000001,0.002,0.0100000000000007,3
+"test-confint-indexing.R","confint-indexing","printing duplicate predictor names disambiguates labels without changing the fit",8,0,FALSE,FALSE,0,0.0100000000000007,0.003,0.0129999999999999,8
+"test-confint-indexing.R","confint-indexing","invalid confidence levels and empty coefficient selections give clear errors",10,0,FALSE,FALSE,0,0.0260000000000007,0.001,0.0270000000000001,10
+"test-core-outputs.R","core-outputs","SR, Sim.CI and Step return the documented structures",8,0,FALSE,FALSE,0,0.0419999999999998,0.004,0.0460000000000003,8
+"test-core-outputs.R","core-outputs","the nodewise options select different tuning rules; the default is ""ZnZ""",7,0,FALSE,FALSE,0,6.834,0.042,6.933,7
+"test-core-outputs.R","core-outputs","Theta.hat() records its nodewise rule; a different explicit nodewise warns",17,0,FALSE,FALSE,0,2.2,0.016,2.23,17
+"test-core-outputs.R","core-outputs","Step does not warn and keeps the RNG stream when all hypotheses are rejected",3,0,FALSE,FALSE,0,0.00799999999999912,0.001,0.00999999999999979,3
+"test-core-validation.R","core-validation","invalid inputs give informative errors",9,0,FALSE,FALSE,0,0.0240000000000009,0.001,0.0250000000000004,9
+"test-core-validation.R","core-validation","data frames and one-column matrices are accepted",1,0,FALSE,FALSE,0,0.00600000000000023,0.001,0.00599999999999845,1
+"test-core-validation.R","core-validation","Sim.CI warns when alpha looks like a significance level",1,0,FALSE,FALSE,0,0.004999999999999,0,0.00600000000000023,1
+"test-core-validation.R","core-validation","a logical set is equivalent to its indices",1,0,FALSE,FALSE,0,0.00600000000000023,0.001,0.00600000000000023,1
+"test-core-validation.R","core-validation","singular Gram matrices and constant columns give informative errors",2,0,FALSE,FALSE,0,0.00699999999999967,0,0.00699999999999967,2
+"test-core-validation.R","core-validation","uncentred data trigger a warning; center = TRUE removes location",3,0,FALSE,FALSE,0,0.0140000000000011,0.001,0.0149999999999988,3
+"test-core-validation.R","core-validation","a supplied Theta reproduces the internal computation",3,0,FALSE,FALSE,0,4.952,0.033,5.216,3
+"test-dbz-additions.R","dbz-additions","Mammen multipliers have moments 0, 1, 1, 2 and use one uniform each",4,0,FALSE,FALSE,0,0.00799999999999912,0.002,0.0100000000000016,4
+"test-dbz-additions.R","dbz-additions","the Gaussian wild and residual resampling draw exactly as hdi",2,0,FALSE,FALSE,0,0.00300000000000011,0.001,0.00400000000000134,2
+"test-dbz-additions.R","dbz-additions","xyz hat construction makes the bootstrap errors orthogonal",5,0,FALSE,FALSE,0,0.228000000000002,0.002,0.232999999999997,5
+"test-dbz-additions.R","dbz-additions","new arguments at their defaults do not change results or the RNG stream",4,0,FALSE,FALSE,0,1.581,0.00800000000000001,1.599,4
+"test-dbz-additions.R","dbz-additions","boot.H0c = TRUE with a p.adjust method keeps the p-values",4,0,FALSE,FALSE,0,0.716000000000001,0.004,0.725000000000001,4
+"test-dbz-additions.R","dbz-additions","a singleton simultaneous interval equals the individual interval",4,0,FALSE,FALSE,0,1.066,0.00700000000000001,1.08,4
+"test-dbz-additions.R","dbz-additions","simultaneous intervals nest and the |T| version is symmetric",9,0,FALSE,FALSE,0,3.743,0.024,3.865,9
+"test-dbz-additions.R","dbz-additions","group p-values: all coefficients give min(pval.corr); monotonicity; inputs",11,0,FALSE,FALSE,0,1.644,0.00900000000000001,1.68,11
+"test-dbz-additions.R","dbz-additions","the xyz-paired bootstrap and Mammen multipliers run and are reproducible",6,0,FALSE,FALSE,0,1.972,0.00900000000000001,1.993,6
+"test-dbz-additions.R","dbz-additions","xyz-paired parallel equals sequential",1,0,FALSE,FALSE,0,0.826,0.082,1.523,1
+"test-dbz-additions.R","dbz-additions","conflicting or unsupported combinations are rejected",5,0,FALSE,FALSE,0,0.307000000000002,0.017,0.326,5
+"test-dbz-additions.R","dbz-additions","messages and warnings of simultaneous inference",2,0,FALSE,FALSE,0,0.866,0.004,0.875,2
+"test-fixtures.R","fixtures","results reproduce the archived SILM 1.0.0 / hdi 0.1-10 / scalreg 1.0.1",50,0,FALSE,FALSE,0,23.542,0.17,23.887,50
+"test-fixtures.R","fixtures","default nodewise with legacy scaled lasso reproduces SILM 1.0.0 (hdi 0.1-10)",17,0,FALSE,FALSE,0,9.51499999999999,0.0690000000000001,9.65199999999999,17
+"test-lasso-proj.R","lasso-proj","lasso.proj returns hdi's fields in hdi's order plus SILM fields",7,0,FALSE,FALSE,0,0.421999999999997,0.00700000000000001,0.432000000000002,7
+"test-lasso-proj.R","lasso-proj","confint for lasso.proj is symmetric Gaussian and respects parm/level",6,0,FALSE,FALSE,0,0.420999999999992,0.004,0.427999999999997,6
+"test-lasso-proj.R","lasso-proj","group-test draws are consumed unless suppressed",1,0,FALSE,FALSE,0,0.825000000000003,0.005,0.834999999999994,1
+"test-lasso-proj.R","lasso-proj","argument checks fail early with informative messages",9,0,FALSE,FALSE,0,0.415000000000006,0.002,0.420000000000002,9
+"test-lasso-proj.R","lasso-proj","binomial: the corrected intercept removal is unbiased, legacy reproduces hdi",4,0,FALSE,FALSE,0,0.768999999999991,0.012,0.787000000000006,4
+"test-nodewise.R","nodewise","Theta and Z have the right shape and normalisation",3,0,FALSE,FALSE,0,2.10300000000001,0.0129999999999999,2.13300000000001,3
+"test-nodewise.R","nodewise","do_znz is required and Z&Z never increases lambda",3,0,FALSE,FALSE,0,2.267,0.015,2.288,3
+"test-nodewise.R","nodewise","the fold assignment is the only random draw and can be supplied",2,0,FALSE,FALSE,0,1.29599999999999,0.00900000000000001,1.31100000000001,2
+"test-nodewise.R","nodewise","parallel computation gives identical results",1,0,FALSE,FALSE,0,0.528999999999996,0.0850000000000001,0.966999999999999,1
+"test-review-fixes.R","review-fixes","Sim.CI follows R's subsetting semantics for `set`, like SILM 1.0.0",5,0,FALSE,FALSE,0,0.0229999999999961,0.002,0.0249999999999915,5
+"test-review-fixes.R","review-fixes","logical designs and responses are used as 0/1",2,0,FALSE,FALSE,0,0.481999999999999,0.006,0.489000000000004,2
+"test-review-fixes.R","review-fixes","0/1 flags are accepted by the hdi-compatible functions",3,0,FALSE,FALSE,0,0.483000000000004,0.00300000000000011,0.488,3
+"test-review-fixes.R","review-fixes","a numeric betainit is accepted with gaussian.stub, as in hdi",1,0,FALSE,FALSE,0,0.177000000000007,0.00100000000000011,0.179000000000002,1
+"test-review-fixes.R","review-fixes","confint: negative parm, parm order and misplaced simultaneous arguments",3,0,FALSE,FALSE,0,0.922999999999988,0.0069999999999999,0.932999999999993,3
+"test-review-fixes.R","review-fixes","inputs on which the nodewise lasso always failed give clear errors",4,0,FALSE,FALSE,0,0.0100000000000051,0,0.0109999999999957,4
+"test-review-fixes.R","review-fixes","a Theta computed with a different `center` triggers a warning",2,0,FALSE,FALSE,0,0.00600000000000023,0.002,0.00699999999999079,2
+"test-review-fixes.R","review-fixes","xyz: the sign of a normaliser does not matter; folds follow original rows",2,0,FALSE,FALSE,0,0.14500000000001,0.00299999999999989,0.147999999999996,2
+"test-review-fixes.R","review-fixes","non-finite or degenerate Z, sigma and betainit are rejected",6,0,FALSE,FALSE,0,0.0150000000000006,0.00100000000000011,0.0160000000000053,6
+"test-review-fixes.R","review-fixes","the default robust.divisor ""n-s"" applies equation (5) of Dezeure, Buehlmann and Zhang",10,0,FALSE,FALSE,0,0.781000000000006,0.016,0.799999999999997,10
+"test-review-fixes.R","review-fixes","""n-s"" needs fewer non-zero entries of a numeric betainit than observations",6,0,FALSE,FALSE,0,1.08399999999999,0.0130000000000001,1.102,6
+"test-review-fixes.R","review-fixes","robust.divisor warns only when ""n-s"" is given with robust = FALSE",9,0,FALSE,FALSE,0,1.66200000000001,0.012,1.68600000000001,9
+"test-review-fixes.R","review-fixes","robust.divisor rescales the bootstrap standard errors consistently",10,0,FALSE,FALSE,0,1.39399999999999,0.0110000000000001,1.41200000000001,10
+"test-scaled-lasso-reference.R","scaled-lasso-reference","scaled lasso agrees with the closed-form one-predictor solution",16,0,FALSE,FALSE,0,0.0250000000000057,0.00700000000000012,0.0330000000000013,16
+"test-scaled-lasso-reference.R","scaled-lasso-reference","scaled lasso recognises the zero-coefficient KKT solution",8,0,FALSE,FALSE,0,0.00900000000000034,0.004,0.0120000000000005,8
+"test-scaled-lasso.R","scaled-lasso","the scaled lasso satisfies the lasso KKT conditions at its penalty",4,0,FALSE,FALSE,0,0.0120000000000005,0.002,0.0139999999999958,4
+"test-scaled-lasso.R","scaled-lasso","the noise level is the RMS residual of the final iterate and converges",4,0,FALSE,FALSE,0,0.00600000000000023,0.00100000000000011,0.00699999999999079,4
+"test-scaled-lasso.R","scaled-lasso","lam0 follows the quantile and universal rules",4,0,FALSE,FALSE,0,0.00600000000000023,0.002,0.007000000000005,4
+"test-scaled-lasso.R","scaled-lasso","coefficients keep column names and p = 1 works",2,0,FALSE,FALSE,0,0.00500000000000966,0.00099999999999989,0.00500000000000966,2
+"test-scaled-lasso.R","scaled-lasso",".standardize_unitnorm centres and scales to unit norm",2,0,FALSE,FALSE,0,0.00399999999999068,0.00100000000000011,0.00500000000000966,2
+"test-st.R","st","ST works when the screening lasso selects no variable (global null)",3,0,FALSE,FALSE,0,5.91199999999999,0.042,5.98100000000001,3
+"test-st.R","st","sub.size may be a proportion",2,0,FALSE,FALSE,0,0.475000000000009,0.004,0.481000000000009,2
+"test-st.R","st","the result keeps SILM 1.0.0's layout; legacy spells 'rejct'",4,0,FALSE,FALSE,0,0.462999999999994,0.004,0.469000000000008,4
+"test-st.R","st","an empty intersection gives statistic 0 (legacy: -Inf) and the same RNG state",5,0,FALSE,FALSE,0,32.96,0.15,33.27,5
+"test-st.R","st","out-of-range test.set indices are ignored with a warning",2,0,FALSE,FALSE,0,0.475000000000009,0.004,0.481999999999999,2
+"test-st.R","st","default and legacy results differ only in the corrected behaviours",6,0,FALSE,FALSE,0,19.831,0.0799999999999998,20.088,6
+"test-xyz-scale.R","xyz-scale","xyz projections depend on residual direction, not response units",20,0,FALSE,FALSE,0,0.0319999999999823,0.01,0.0429999999999779,20
+"test-xyz-scale.R","xyz-scale","xyz projections reject an exactly zero residual direction",1,0,FALSE,FALSE,0,0.00300000000001432,0.00099999999999989,0.00499999999999545,1
+"test-xyz-scale.R","xyz-scale","the xyz bootstrap preserves inference after changing response units",7,0,FALSE,FALSE,0,0.106999999999999,0.00499999999999989,0.113,7
+"test-response-units.R","response-units","scaled lasso obeys response units and its fixed-point equations",23,0,FALSE,FALSE,0,0.11,0.015,0.129,23
+"test-response-units.R","response-units","a zero solver solution does not produce undefined inference",6,0,FALSE,FALSE,0,0.099,0.003,0.104,6
+"test-response-units.R","response-units","orthogonal-design simultaneous intervals do not depend on response units",7,0,FALSE,FALSE,0,0.0409999999999999,0.004,0.0450000000000002,7
+"test-response-units.R","response-units","inference callers propagate the equivariant scaled-lasso solver",12,0,FALSE,FALSE,0,0.811,0.013,0.827,12

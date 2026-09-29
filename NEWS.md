@@ -1,3 +1,29 @@
+# SILM development version
+
+* `confint()` preserves coefficient positions when predictor names repeat,
+  including default, individual and simultaneous selections. Ambiguous
+  character names now give an informative error; numeric indices remain
+  usable. `print()` disambiguates repeated labels without altering the fit.
+* The scaled lasso now normalizes the response before constructing its path
+  and uses a relative convergence tolerance of 1e-8. This fixes intervals
+  changing width after converting response units, and can slightly change
+  ordinary-scale results. All six inference functions accept
+  `scaled.lasso = "legacy"` to reproduce the archived absolute-tolerance
+  solver (and its units sensitivity). Legacy fixture/equivalence checks
+  explicitly select it; separate tests verify the default solver's equations
+  and response equivariance. Existing calibration reports used the historical
+  solver and have not been rerun for this change.
+* The xyz-paired bootstrap projects using normalized residuals, avoiding an
+  absolute cutoff that rejected valid responses in small units.
+* `ST()` rejects screening samples smaller than three before cross-validation.
+  One-predictor Gaussian-stub bootstrap and WY with `N = 1` retain their
+  matrix dimensions. A single WY draw is supported for API consistency, but
+  is insufficient for meaningful inference.
+* `confint()` now rejects non-finite confidence levels and empty selections
+  with clear errors.
+* Zero or non-finite fitted noise levels stop with an informative error before
+  inference instead of producing undefined p-values or selections.
+
 # SILM 2.0.0 (2026-09-25)
 
 SILM was archived on CRAN on 2026-07-10 because its dependency 'scalreg' was

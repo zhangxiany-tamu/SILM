@@ -20,3 +20,7 @@ adjusted p-values).}
 \description{
 Print results of lasso.proj and boot.lasso.proj
 }
+\details{
+Duplicated predictor names are made unique in the printed display;
+the names stored in \code{x} are unchanged.
+}

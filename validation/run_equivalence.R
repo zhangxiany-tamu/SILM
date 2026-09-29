@@ -1,4 +1,6 @@
 # Run the equivalence harness.
+# All scaled-lasso comparisons explicitly use scaled.lasso = "legacy";
+# default numerical correctness is covered by independent regression/oracle tests.
 #
 # Usage:
 #   Rscript validation/run_equivalence.R [--tier fast|full] [--cores 8]

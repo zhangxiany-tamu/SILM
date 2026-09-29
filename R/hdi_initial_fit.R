@@ -2,7 +2,7 @@
 #
 # Adapted from 'hdi' 0.1-10 (R/helpers.R: initial.estimator, do.initial.fit;
 # GPL, see inst/COPYRIGHTS). Changes: the scaled lasso is SILM's own
-# .scaled_lasso() (numerically identical to scalreg, which hdi used); the
+# .scaled_lasso() (the legacy setting is identical to scalreg, which hdi used); the
 # cross-validation folds of cv.glmnet() can be supplied (`foldid`, giving the
 # same result as the fold draw inside cv.glmnet()); argument checks were moved
 # to the callers. The computations are unchanged.
@@ -11,7 +11,7 @@
 # lambda.1se) tuning, or at a given lambda. Returns the coefficients without
 # intercept, the noise level estimate, the intercept and the lambda used.
 do.initial.fit <- function(x, y, initial.lasso.method = c("scaled lasso", "cv lasso"),
-                           lambda, verbose = FALSE, foldid = NULL) {
+                           lambda, verbose = FALSE, foldid = NULL, scaled.lasso = "equivariant") {
   no.lambda.given <- missing(lambda) || is.null(lambda)
   if (!no.lambda.given && verbose) {
     cat("A value for lambda was provided to the do.initial.fit function,\n")
@@ -22,7 +22,7 @@ do.initial.fit <- function(x, y, initial.lasso.method = c("scaled lasso", "cv la
   if (no.lambda.given) {
     switch(initial.lasso.method,
       "scaled lasso" = {
-        scaledlassofit <- .scaled_lasso(x, y)
+        scaledlassofit <- .scaled_lasso(x, y, scaled.lasso = scaled.lasso)
         lambda <- NULL
       },
       "cv lasso" = {
@@ -69,7 +69,8 @@ do.initial.fit <- function(x, y, initial.lasso.method = c("scaled lasso", "cv la
 }
 
 # Validate betainit/sigma and compute the initial estimate.
-initial.estimator <- function(betainit, x, y, sigma, foldid = NULL, warn_sigma = TRUE) {
+initial.estimator <- function(betainit, x, y, sigma, foldid = NULL, warn_sigma = TRUE,
+                              scaled.lasso = "equivariant") {
   warning.sigma.message <- function() {
     if (warn_sigma) {
       warning("Overriding the error variance estimate with your own value. The initial ",
@@ -83,11 +84,13 @@ initial.estimator <- function(betainit, x, y, sigma, foldid = NULL, warn_sigma =
     sigmahat <- sigma
     warning.sigma.message()
   } else {
-    initial.fit <- do.initial.fit(x = x, y = y, initial.lasso.method = betainit, foldid = foldid)
+    initial.fit <- do.initial.fit(x = x, y = y, initial.lasso.method = betainit, foldid = foldid,
+                                  scaled.lasso = scaled.lasso)
     beta.lasso <- initial.fit$betalasso
     lambda <- initial.fit$lambda
     if (is.null(sigma)) {
       sigmahat <- initial.fit$sigmahat
+      .check_estimated_noise(sigmahat)
     } else {
       warning.sigma.message()
       sigmahat <- sigma

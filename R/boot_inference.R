@@ -22,6 +22,8 @@
 .boot_wy <- function(bproj, se, cboot.dist.underH0c, B) {
   max.t.dist <- apply(abs(cboot.dist.underH0c), 2, max)
   counts.matrix <- sapply(max.t.dist, FUN = ">=", abs(bproj / se))
+  # sapply() drops the row dimension when there is just one coefficient.
+  if (is.null(dim(counts.matrix))) counts.matrix <- matrix(counts.matrix, nrow = length(bproj))
   counts <- apply(counts.matrix, 1, sum)
   (counts + 1) / (B + 1)
 }

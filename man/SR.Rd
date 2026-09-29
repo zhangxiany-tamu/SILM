@@ -11,7 +11,8 @@ SR(
   center = FALSE,
   Theta = NULL,
   parallel = FALSE,
-  ncores = getOption("mc.cores", 2L)
+  ncores = getOption("mc.cores", 2L),
+  scaled.lasso = c("equivariant", "legacy")
 )
 }
 \arguments{
@@ -44,6 +45,14 @@ warning is given when \code{nodewise} is supplied explicitly and differs.}
 results. With a BLAS library that uses OpenMP threads, forked workers can
 occasionally stall; setting the environment variable \code{OMP_NUM_THREADS=1}
 before starting R avoids this.}
+
+\item{scaled.lasso}{Numerical solver for the scaled lasso. The default
+\code{"equivariant"} normalizes the response before building the lasso path
+and stops at a relative noise-level change of \code{1e-8}, so estimates and
+intervals scale with the response units. \code{"legacy"} reproduces
+scalreg 1.0.1's absolute tolerance \code{1e-4} and its sensitivity to response
+units; use it only to reproduce archived results. This setting can also
+change ordinary-scale results slightly because convergence is tighter.}
 }
 \value{
 A list with two integer vectors: \code{"de-biased Lasso"}, the variables
@@ -90,7 +99,8 @@ and \code{validation/calibration/defaults-results/REPORT.md} in the source repos
 the default, the results equal those of SILM 1.0.0 as
 installed from 2019 to 2026 (with hdi 0.1-7 to 0.1-10; for \code{ST()} together
 with \code{legacy = TRUE}). Use \code{nodewise = "cv"} for the tuning of the paper;
-it reproduces SILM 1.0.0 with hdi 0.1-6. Both settings reproduce the
+it reproduces SILM 1.0.0 with hdi 0.1-6. Exact archived reproduction also
+requires \code{scaled.lasso = "legacy"}. Both nodewise settings reproduce the
 respective archived versions exactly (same numbers under the same random
 seed).
 

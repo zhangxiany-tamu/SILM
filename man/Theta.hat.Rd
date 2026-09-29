@@ -79,7 +79,8 @@ and \code{validation/calibration/defaults-results/REPORT.md} in the source repos
 the default, the results equal those of SILM 1.0.0 as
 installed from 2019 to 2026 (with hdi 0.1-7 to 0.1-10; for \code{ST()} together
 with \code{legacy = TRUE}). Use \code{nodewise = "cv"} for the tuning of the paper;
-it reproduces SILM 1.0.0 with hdi 0.1-6. Both settings reproduce the
+it reproduces SILM 1.0.0 with hdi 0.1-6. Exact archived reproduction also
+requires \code{scaled.lasso = "legacy"}. Both nodewise settings reproduce the
 respective archived versions exactly (same numbers under the same random
 seed).
 

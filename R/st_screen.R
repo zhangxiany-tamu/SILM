@@ -15,9 +15,10 @@
     .stop("'sub.size' must be a positive number (a count, or a proportion of n).")
   }
   n1 <- if (sub.size < 1) floor(sub.size * n + sqrt(.Machine$double.eps)) else floor(sub.size)
-  if (n1 < 2 || n - n1 < 10) {
-    .stop("'sub.size' must leave at least 2 observations for screening and 10 for testing ",
-          "(the nodewise lasso on the testing sub-sample uses 10-fold cross-validation); ",
+  if (n1 < 3 || n - n1 < 10) {
+    .stop("'sub.size' must leave at least 3 observations for screening and 10 for testing ",
+          "(screening needs at least 3 cross-validation folds; the nodewise lasso on ",
+          "the testing sub-sample uses 10-fold cross-validation); ",
           "n = ", n, ", |D1| = ", n1, ".")
   }
   n1

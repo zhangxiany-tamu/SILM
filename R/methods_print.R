@@ -5,6 +5,8 @@
 #'   adjusted p-values).
 #' @param ... Not used.
 #' @return `x`, invisibly.
+#' @details Duplicated predictor names are made unique in the printed display;
+#'   the names stored in `x` are unchanged.
 #' @export
 print.silm_proj <- function(x, n = 10L, ...) {
   boot <- identical(x$method, "boot.lasso.proj")
@@ -24,15 +26,17 @@ print.silm_proj <- function(x, n = 10L, ...) {
   }
   cat(paste(settings, collapse = "; "), "\n")
   cat("Estimated noise level (sigmahat):", format(x$sigmahat, digits = 4), "\n")
+  # Disambiguate labels only for display, in the original coefficient order.
+  # The fitted vectors retain the predictor names supplied by the caller.
+  labels <- make.unique(as.character(names(x$bhat) %||% seq_along(x$bhat)))
   for (a in c(0.05, 0.01)) {
     sel <- which(x$pval.corr <= a)
     cat(sprintf("Significant at level %s (adjusted p-values): %s\n", a,
-                if (length(sel)) paste(names(sel) %||% sel, collapse = ", ") else "none"))
+                if (length(sel)) paste(labels[sel], collapse = ", ") else "none"))
   }
   ord <- utils::head(order(x$pval.corr, x$pval), n)
   tab <- data.frame(estimate = x$bhat[ord], se = x$se[ord], p.value = x$pval[ord],
-                    p.adjusted = x$pval.corr[ord])
-  rownames(tab) <- names(x$bhat)[ord] %||% ord
+                    p.adjusted = x$pval.corr[ord], row.names = labels[ord])
   cat(sprintf("\nCoefficients with the smallest adjusted p-values (%d of %d):\n",
               length(ord), length(x$bhat)))
   print(signif(tab, 4))

@@ -7,7 +7,10 @@
 # until sigma stabilises. lam0 defaults to the quantile-based penalty level of
 # Sun and Zhang (2013), obtained from a damped fixed-point iteration.
 #
-# This is an independent implementation. Its numerical conventions (starting
+# This is an independent implementation. The default solver works in units of
+# the response RMS, including when constructing the lars path, so changing the
+# response units cannot change the stopping rule or the path's numerical rank.
+# The legacy solver's numerical conventions (starting
 # value 5 for sigma, tolerance 1e-4, at most 101 updates, the lambda of the
 # previous iterate for the returned coefficients) were chosen so that results
 # agree exactly with the archived 'scalreg' package (version 1.0.1), which the
@@ -63,11 +66,42 @@ SCALED_LASSO_MAX_UPDATES <- 100L
 #'   `lam0`, `lambda` (penalty of the returned fit, per observation),
 #'   `iterations` and `converged`.
 #' @noRd
-.scaled_lasso <- function(X, y, lam0 = NULL) {
+.scaled_lasso <- function(X, y, lam0 = NULL,
+                          scaled.lasso = c("equivariant", "legacy")) {
+  scaled.lasso <- match.arg(scaled.lasso)
   X <- as.matrix(X)
   y <- as.numeric(y)
   n <- dim(X)[1]
   lam0 <- .resolve_lam0(lam0, n, dim(X)[2])
+  if (scaled.lasso == "legacy") return(.scaled_lasso_path(X, y, lam0))
+
+  # Compute the RMS without squaring numbers in the original response units.
+  # A zero response has the exact zero solution; lars cannot build its path.
+  ymax <- max(abs(y))
+  if (ymax == 0) {
+    return(list(coefficients = stats::setNames(rep(0, ncol(X)), colnames(X)),
+                hsigma = 0, lam0 = lam0, lambda = 0, iterations = 0L,
+                converged = TRUE))
+  }
+  yscale <- ymax * sqrt(mean((y / ymax)^2))
+  yn <- y / yscale
+  # Exact KKT condition for the zero solution. In particular, lars cannot
+  # construct a path when the response is orthogonal to every predictor.
+  if (max(abs(crossprod(X, yn))) / n <= lam0) {
+    return(list(coefficients = stats::setNames(rep(0, ncol(X)), colnames(X)),
+                hsigma = yscale, lam0 = lam0, lambda = lam0 * yscale,
+                iterations = 0L, converged = TRUE))
+  }
+  fit <- .scaled_lasso_path(X, yn, lam0, relative = TRUE)
+  fit$coefficients <- fit$coefficients * yscale
+  fit$hsigma <- fit$hsigma * yscale
+  fit$lambda <- fit$lambda * yscale
+  fit
+}
+
+# Keep the historical arithmetic intact only for explicit archived replication.
+.scaled_lasso_path <- function(X, y, lam0, relative = FALSE) {
+  n <- nrow(X)
 
   path <- lars::lars(X, y, type = "lasso", intercept = FALSE, normalize = FALSE,
                      use.Gram = FALSE)
@@ -78,14 +112,17 @@ SCALED_LASSO_MAX_UPDATES <- 100L
   sigma_old <- 0.1
   sigma <- SCALED_LASSO_SIGMA_START
   updates <- 0L
-  while (abs(sigma_old - sigma) > SCALED_LASSO_TOL & updates <= SCALED_LASSO_MAX_UPDATES) {
+  stable <- function(old, new) {
+    abs(old - new) <= if (relative) 1e-8 * max(abs(old), abs(new)) else SCALED_LASSO_TOL
+  }
+  while (!stable(sigma_old, sigma) & updates <= SCALED_LASSO_MAX_UPDATES) {
     updates <- updates + 1L
     sigma_old <- sigma
     lambda <- lam0 * sigma_old
     fitted <- path_fit(lambda, "fit")$fit
     sigma <- sqrt(mean((y - fitted)^2))
   }
-  converged <- abs(sigma_old - sigma) <= SCALED_LASSO_TOL
+  converged <- stable(sigma_old, sigma)
   if (!converged) {
     warning("scaled lasso: noise level did not converge within ",
             SCALED_LASSO_MAX_UPDATES + 1L, " updates.", call. = FALSE)

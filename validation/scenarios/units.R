@@ -30,7 +30,7 @@ old_A1 <- function(d, a) {
   list(coefficients = fit$coefficients, hsigma = fit$hsigma)
 }
 new_A1 <- function(d, a) {
-  fit <- SILM:::.scaled_lasso(d$X, d$y)
+  fit <- SILM:::.scaled_lasso(d$X, d$y, scaled.lasso = "legacy")
   list(coefficients = fit$coefficients, hsigma = fit$hsigma)
 }
 

@@ -18,7 +18,9 @@
 \item{object}{A result of \code{\link[=lasso.proj]{lasso.proj()}} or \code{\link[=boot.lasso.proj]{boot.lasso.proj()}}.}
 
 \item{parm}{Coefficients (indices or names) for which intervals are
-returned; by default all coefficients (or all of \code{group}).}
+returned; by default all coefficients (or all of \code{group}). Use numeric
+indices when predictor names are duplicated; a name must identify one
+coefficient unambiguously.}
 
 \item{level}{Confidence level (joint level for simultaneous intervals).}
 
@@ -26,7 +28,7 @@ returned; by default all coefficients (or all of \code{group}).}
 
 \item{group}{For simultaneous intervals: the group \eqn{G} of coefficients
 covered jointly (indices, names or a logical vector); must contain
-\code{parm}. Defaults to \code{parm}.}
+\code{parm}. Defaults to \code{parm}. Names must identify coefficients unambiguously.}
 
 \item{simult.stat}{\code{"maxmin"} (default; eq. 10) or \code{"abs"}.}
 

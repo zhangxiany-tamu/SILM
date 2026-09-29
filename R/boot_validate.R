@@ -37,6 +37,10 @@
     group <- which(group)
   } else if (is.character(group)) {
     if (is.null(pnames) || !all(group %in% pnames)) .stop("Unknown names in '", arg, "'.")
+    if (any(group %in% pnames[duplicated(pnames)])) {
+      .stop("Ambiguous coefficient names in '", arg,
+            "'; use numeric indices for duplicated names.")
+    }
     group <- match(group, pnames)
   }
   if (!is.numeric(group) || !length(group) || anyNA(group) || any(group != floor(group)) ||

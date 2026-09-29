@@ -25,12 +25,16 @@
 #'
 #' @section Compatibility with hdi 0.1-10:
 #' For the same data, arguments and random seed (and `robust.divisor = "n"`
-#' if `robust = TRUE`), `lasso.proj()` returns the same `pval`, `pval.corr`,
+#' if `robust = TRUE`, and `scaled.lasso = "legacy"` if using scaled-lasso
+#' initialization), `lasso.proj()` returns the same `pval`, `pval.corr`,
 #' `bhat`, `se`, `betahat` and `sigmahat` as `hdi::lasso.proj()` and leaves
 #' the random number generator in the same state; this is verified against
 #' the archived hdi package (with the same version of glmnet;
 #' `multiplecorr.method = "WY"` also depends on the BLAS/LAPACK used by
 #' `MASS::mvrnorm()`). The differences are:
+#' * Scaled-lasso initialization now uses a response-normalized path and
+#'   relative convergence tolerance. Use `scaled.lasso = "legacy"` for the
+#'   historical solver, which is sensitive to response units.
 #' * `robust = TRUE`: the robust standard error uses the divisor
 #'   \eqn{n - \hat s}{n - s} of equation (5) of Dezeure, Bühlmann and Zhang
 #'   (2017) by default (`robust.divisor = "n-s"`), so its standard errors are
@@ -81,6 +85,13 @@
 #'   `sigma`. With `robust = TRUE` and the default `robust.divisor = "n-s"`, a
 #'   numeric `betainit` must have fewer than n non-zero entries (see
 #'   `robust.divisor`).
+#' @param scaled.lasso Numerical solver when `betainit = "scaled lasso"`:
+#'   `"equivariant"` (default) normalizes the response and uses a relative
+#'   noise-level tolerance of `1e-8`; `"legacy"` reproduces scalreg 1.0.1's
+#'   absolute tolerance `1e-4` and sensitivity to response units. The default
+#'   can also slightly change ordinary-scale results. Ignored for other
+#'   initial estimators. In [boot.lasso.proj()] the same setting is used for
+#'   all bootstrap refits.
 #' @param sigma Optional noise standard deviation, overriding the estimate
 #'   (not used with `robust = TRUE`, whose standard errors do not involve it,
 #'   nor for `family = "binomial"`).
@@ -157,7 +168,9 @@ lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
                        ncores = getOption("mc.cores", 2L), betainit = "cv lasso",
                        sigma = NULL, Z = NULL, verbose = FALSE, return.Z = FALSE,
                        suppress.grouptesting = FALSE, robust = FALSE, do.ZnZ = FALSE,
-                       legacy = FALSE, robust.divisor = c("n-s", "n")) {
+                       legacy = FALSE, robust.divisor = c("n-s", "n"),
+                       scaled.lasso = c("equivariant", "legacy")) {
+  scaled.lasso <- match.arg(scaled.lasso)
   # (missing() is unreliable once an argument has been modified.)
   divisor_given <- !missing(robust.divisor)
   robust.divisor <- .check_divisor(robust.divisor, robust, given = divisor_given)
@@ -192,7 +205,7 @@ lasso.proj <- function(x, y, family = "gaussian", standardize = TRUE,
   scaleZ <- Zout$scaleZ
 
   initial.estimate <- initial.estimator(betainit = betainit, sigma = sigma, x = x, y = y,
-                                        warn_sigma = !binomial)
+                                        warn_sigma = !binomial, scaled.lasso = scaled.lasso)
   betalasso <- initial.estimate$beta.lasso
   sigmahat <- initial.estimate$sigmahat
 

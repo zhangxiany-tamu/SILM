@@ -18,7 +18,8 @@
 #'
 #' @param object A result of [boot.lasso.proj()].
 #' @param group A group of coefficients (indices, names or a logical vector),
-#'   or a list of groups.
+#'   or a list of groups. Names must identify coefficients unambiguously;
+#'   use numeric indices when predictor names are duplicated.
 #' @param ... Not used.
 #' @return The p-values, one per group (named if `group` is a named list).
 #' @references Dezeure, R., Bühlmann, P. and Zhang, C.-H. (2017).

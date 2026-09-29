@@ -22,7 +22,8 @@ lasso.proj(
   robust = FALSE,
   do.ZnZ = FALSE,
   legacy = FALSE,
-  robust.divisor = c("n-s", "n")
+  robust.divisor = c("n-s", "n"),
+  scaled.lasso = c("equivariant", "legacy")
 )
 }
 \arguments{
@@ -100,6 +101,14 @@ design), at a mean power loss of 0.027 (see \code{validation/calibration/DEFAULT
 \code{lasso.proj()} it also applies to \code{family = "binomial"}
 (the linearised model) and to a numeric \code{betainit}, which the study did
 not cover.}
+
+\item{scaled.lasso}{Numerical solver when \code{betainit = "scaled lasso"}:
+\code{"equivariant"} (default) normalizes the response and uses a relative
+noise-level tolerance of \code{1e-8}; \code{"legacy"} reproduces scalreg 1.0.1's
+absolute tolerance \code{1e-4} and sensitivity to response units. The default
+can also slightly change ordinary-scale results. Ignored for other
+initial estimators. In \code{\link[=boot.lasso.proj]{boot.lasso.proj()}} the same setting is used for
+all bootstrap refits.}
 }
 \value{
 An object of class \code{c("silm_lasso_proj", "silm_proj")}: a list with
@@ -133,13 +142,17 @@ chosen by 10-fold cross-validation (or with the Z&Z rule if \code{do.ZnZ = TRUE}
 \section{Compatibility with hdi 0.1-10}{
 
 For the same data, arguments and random seed (and \code{robust.divisor = "n"}
-if \code{robust = TRUE}), \code{lasso.proj()} returns the same \code{pval}, \code{pval.corr},
+if \code{robust = TRUE}, and \code{scaled.lasso = "legacy"} if using scaled-lasso
+initialization), \code{lasso.proj()} returns the same \code{pval}, \code{pval.corr},
 \code{bhat}, \code{se}, \code{betahat} and \code{sigmahat} as \code{hdi::lasso.proj()} and leaves
 the random number generator in the same state; this is verified against
 the archived hdi package (with the same version of glmnet;
 \code{multiplecorr.method = "WY"} also depends on the BLAS/LAPACK used by
 \code{MASS::mvrnorm()}). The differences are:
 \itemize{
+\item Scaled-lasso initialization now uses a response-normalized path and
+relative convergence tolerance. Use \code{scaled.lasso = "legacy"} for the
+historical solver, which is sensitive to response units.
 \item \code{robust = TRUE}: the robust standard error uses the divisor
 \eqn{n - \hat s}{n - s} of equation (5) of Dezeure, Bühlmann and Zhang
 (2017) by default (\code{robust.divisor = "n-s"}), so its standard errors are
